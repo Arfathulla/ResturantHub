@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Online Menu', ~{::#content})}">
+<head><title>Online Menu</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <!-- Menu Header & Branch Switcher -->
+        <div class="row align-items-center mb-4">
+            <div class="col-md-6">
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-bowl-food text-warning me-2"></i> Bangalore Food Menu</h2>
+                <p class="text-muted mb-0">
+                    <i class="fa-solid fa-location-dot text-danger me-1"></i>
+                    Bengaluru, Karnataka &bull; Fresh, authentic, locally sourced
+                </p>
+            </div>
+            <div class="col-md-6">
+                <form th:action="@{/menu}" method="get" class="row g-2 justify-content-md-end" id="menuSearchForm">
+                    <div class="col-auto">
+                        <select name="branchId" class="form-select" onchange="this.form.submit()" id="branchSelect">
+                            <option th:each="b : ${branches}"
+                                    th:value="${b.id}"
+                                    th:text="${b.name}"
+                                    th:selected="${b.id == selectedBranchId}">Branch</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <input type="text" name="query" class="form-control" id="searchInput"
+                                   placeholder="Search biryani, dosa, pizza..." th:value="${searchQuery}"
+                                   autocomplete="off">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Live search results container (populated by JS) -->
+        <div id="liveSearchResults" class="mb-3" style="display:none;">
+            <div class="d-flex align-items-center mb-3">
+                <h5 class="mb-0 me-2">Live Search Results</h5>
+                <span class="badge bg-warning text-dark" id="liveResultCount">0 found</span>
+                <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="clearLiveSearch()">
+                    <i class="fa-solid fa-xmark me-1"></i>Clear
+                </button>
+            </div>
+            <div class="row g-4" id="liveResultsGrid"></div>
+        </div>
+
+        <!-- Static Menu Items Grid -->
+        <div id="staticMenu">
+            <div class="row g-4" th:if="${not #lists.isEmpty(menuItems)}">
+                <div class="col-md-4 col-sm-6" th:each="item : ${menuItems}">
+                    <div class="card h-100 shadow-sm card-hover overflow-hidden">
+                        <div class="position-relative">
+                            <img th:src="${item.imageUrl != null ? item.imageUrl : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'}"
+                                 class="card-img-top" style="height: 200px; object-fit: cover;" alt="Dish Photo">
+                            <span class="position-absolute top-0 end-0 m-2 badge bg-success" th:if="${item.vegetarian}">
+                                <i class="fa-solid fa-leaf me-1"></i>Veg
+                            </span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h5 class="fw-bold text-dark mb-0" th:text="${item.name}">Dish Name</h5>
+                                <span class="fs-5 fw-bold text-danger ms-2">₹<span th:text="${item.basePrice}">0</span></span>
+                            </div>
+                            <p class="text-muted small mb-2">
+                                <i class="fa-solid fa-tag me-1"></i>
+                                <span th:text="${item.categoryName}">Category</span>
+                            </p>
+                            <p class="card-text text-secondary small flex-grow-1" th:text="${item.description}">Description</p>
+
+                            <!-- Dietary Badges -->
+                            <div class="mb-3 d-flex flex-wrap gap-1">
+                                <span class="badge bg-primary" th:if="${item.vegan}">Vegan</span>
+                                <span class="badge bg-info text-dark" th:if="${item.glutenFree}">Gluten-Free</span>
+                                <span class="badge bg-light text-muted border small" th:if="${item.allergenInfo != null and item.allergenInfo != 'None'}"
+                                      th:text="${'⚠ ' + item.allergenInfo}"></span>
+                                <span class="badge bg-secondary" th:if="${item.prepTimeMinutes != null}">
+                                    <i class="fa-regular fa-clock me-1"></i><span th:text="${item.prepTimeMinutes}">10</span> min
+                                </span>
+                            </div>
+
+                            <!-- Add to Cart Form -->
+                            <form th:action="@{/cart/add}" method="post">
+                                <input type="hidden" name="branchId" th:value="${selectedBranchId}">
+                                <input type="hidden" name="menuItemId" th:value="${item.id}">
+
+                                <!-- Variant Selection -->
+                                <div class="mb-2" th:if="${not #lists.isEmpty(item.variants)}">
+                                    <label class="small fw-semibold text-muted">Size / Portion:</label>
+                                    <select name="variantId" class="form-select form-select-sm">
+                                        <option th:each="v : ${item.variants}"
+                                                th:value="${v.id}"
+                                                th:text="${v.variantName + ' (+₹' + v.priceDelta + ')'}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="number" name="quantity" class="form-control form-control-sm text-center"
+                                           value="1" min="1" max="20" style="width: 70px;">
+                                    <button type="submit" class="btn btn-warning btn-sm fw-bold flex-grow-1">
+                                        <i class="fa-solid fa-cart-plus me-1"></i> Add to Order
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(menuItems)}" class="text-center py-5">
+                <i class="fa-solid fa-utensils text-muted fa-4x mb-3"></i>
+                <h4>No menu items found</h4>
+                <p class="text-muted">Try a different branch or search term.</p>
+                <a th:href="@{'/menu?branchId=' + ${selectedBranchId}}" class="btn btn-outline-dark">Reset Filters</a>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const currentBranchId = /*[[${selectedBranchId}]]*/ 1;
+        let searchTimer;
+
+        const searchInput = document.getElementById('searchInput');
+
+        // Live search with 400ms debounce
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimer);
+                const query = this.value.trim();
+                if (query.length < 2) {
+                    clearLiveSearch();
+                    return;
+                }
+                searchTimer = setTimeout(() => performLiveSearch(query), 400);
+            });
+        }
+
+        async function performLiveSearch(query) {
+            try {
+                const resp = await fetch(`/api/v1/menu/search?branchId=${currentBranchId}&query=${encodeURIComponent(query)}`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const items = data.data || [];
+                renderLiveResults(items, query);
+            } catch(e) {
+                console.error('Search error:', e);
+            }
+        }
+
+        function renderLiveResults(items, query) {
+            const container = document.getElementById('liveSearchResults');
+            const grid = document.getElementById('liveResultsGrid');
+            const count = document.getElementById('liveResultCount');
+            const staticMenu = document.getElementById('staticMenu');
+
+            count.textContent = items.length + ' found';
+            staticMenu.style.display = items.length > 0 ? 'none' : 'block';
+
+            if (items.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            grid.innerHTML = items.map(item => `
+                <div class="col-md-4 col-sm-6">
+                    <div class="card h-100 shadow-sm card-hover overflow-hidden">
+                        <div class="position-relative">
+                            <img src="${item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800'}"
+                                 class="card-img-top" style="height:200px;object-fit:cover;" alt="${item.name}">
+                            ${item.vegetarian ? '<span class="position-absolute top-0 end-0 m-2 badge bg-success"><i class="fa-solid fa-leaf me-1"></i>Veg</span>' : ''}
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between mb-1">
+                                <h5 class="fw-bold text-dark mb-0">${highlightText(item.name, query)}</h5>
+                                <span class="fs-5 fw-bold text-danger ms-2">&#8377;${item.basePrice}</span>
+                            </div>
+                            <p class="text-muted small mb-2"><i class="fa-solid fa-tag me-1"></i>${item.categoryName || ''}</p>
+                            <p class="card-text text-secondary small flex-grow-1">${item.description || ''}</p>
+                            <form action="/cart/add" method="post" class="mt-auto">
+                                <input type="hidden" name="branchId" value="${currentBranchId}">
+                                <input type="hidden" name="menuItemId" value="${item.id}">
+                                <div class="d-flex gap-2">
+                                    <input type="number" name="quantity" class="form-control form-control-sm text-center" value="1" min="1" max="20" style="width:70px;">
+                                    <button type="submit" class="btn btn-warning btn-sm fw-bold flex-grow-1">
+                                        <i class="fa-solid fa-cart-plus me-1"></i> Add
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const re = new RegExp(`(${query})`, 'gi');
+            return text.replace(re, '<mark>$1</mark>');
+        }
+
+        function clearLiveSearch() {
+            document.getElementById('liveSearchResults').style.display = 'none';
+            document.getElementById('staticMenu').style.display = 'block';
+            document.getElementById('liveResultsGrid').innerHTML = '';
+        }
+    </script>
+</div>
+</body>
+</html>

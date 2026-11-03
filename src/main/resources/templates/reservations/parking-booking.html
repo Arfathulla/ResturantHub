@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Reserve Parking', ~{::#content})}">
+<head><title>Reserve Parking</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-square-parking text-success fa-3x mb-2"></i>
+                        <h3 class="fw-bold">Reserve Guaranteed Parking</h3>
+                        <p class="text-muted small">Covered bays, EV fast-charging ports, and contactless check-in</p>
+                    </div>
+
+                    <form th:action="@{/reservations/parking}" th:object="${parkingDto}" method="post">
+                        <!-- Branch Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Branch Facility</label>
+                            <select th:field="*{branchId}" class="form-select" required>
+                                <option value="">-- Choose Branch Facility --</option>
+                                <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Vehicle Type & Registration -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Vehicle Classification</label>
+                                <select th:field="*{vehicleType}" class="form-select" required>
+                                    <option value="CAR">Standard Passenger Car ($5.00/hr)</option>
+                                    <option value="EV">Electric Vehicle with Charging ($7.50/hr)</option>
+                                    <option value="MOTORCYCLE">Motorcycle / Scooter ($3.00/hr)</option>
+                                    <option value="VAN">Van / Minibus ($8.00/hr)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">License / Registration Number</label>
+                                <input type="text" th:field="*{vehicleRegistrationNo}" class="form-control text-uppercase" placeholder="e.g. NY-ABC1234" required>
+                                <div class="form-text small text-muted">Handled as private data; never exposed publicly.</div>
+                            </div>
+                        </div>
+
+                        <!-- Date and Time Interval -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Parking Date</label>
+                                <input type="date" th:field="*{reservationDate}" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Entry Time</label>
+                                <input type="time" th:field="*{startTime}" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Exit Time</label>
+                                <input type="time" th:field="*{endTime}" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light border small text-muted mb-4">
+                            <i class="fa-solid fa-clock text-warning me-1"></i>
+                            <strong>Parking Policy:</strong> Valid entry barcode and automated slot check-in provided upon booking. Cancellations allowed up to 1 hour before scheduled arrival.
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 fw-bold py-2 shadow-sm">
+                            <i class="fa-solid fa-square-parking me-1"></i> Confirm Parking Slot Reservation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

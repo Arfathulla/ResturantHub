@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Home', ~{::#content})}">
+<head><title>Home</title></head>
+<body>
+<div id="content">
+
+    <!-- Hero Section -->
+    <div class="bg-dark text-white py-5 position-relative" style="background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600') center/cover no-repeat;">
+        <div class="container py-5 text-center">
+            <span class="badge bg-warning text-dark px-3 py-2 fw-bold text-uppercase tracking-wide mb-3">Next-Generation Dining Platform</span>
+            <h1 class="display-3 fw-bold mb-3">Exceptional Dining, Seamless Reservations</h1>
+            <p class="lead mb-4 mx-auto" style="max-width: 750px;">
+                Experience Michelin-caliber gastronomy, reserve luxury private dining suites, host grand celebration banquets, secure parking in advance, and order gourmet dishes online.
+            </p>
+            
+            <!-- Quick CTA Buttons -->
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="/reservations/tables/new" class="btn btn-warning btn-lg fw-bold px-4 shadow">
+                    <i class="fa-solid fa-chair me-2"></i> Book a Table
+                </a>
+                <a href="/menu" class="btn btn-light btn-lg fw-semibold px-4 shadow">
+                    <i class="fa-solid fa-utensils me-2"></i> Order Food
+                </a>
+                <a href="/reservations/rooms/new" class="btn btn-outline-light btn-lg px-4">
+                    <i class="fa-solid fa-door-closed me-2"></i> Private Rooms
+                </a>
+                <a href="/reservations/halls/new" class="btn btn-outline-warning btn-lg px-4">
+                    <i class="fa-solid fa-champagne-glasses me-2"></i> Party Halls
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Services Grid -->
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Integrated Hospitality Modules</h2>
+            <p class="text-muted">Explore our complete range of dining, reservation, and event hosting services</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Table Reservation Card -->
+            <div class="col-md-3">
+                <div class="card h-100 p-4 text-center card-hover shadow-sm">
+                    <div class="text-danger mb-3"><i class="fa-solid fa-chair fa-3x"></i></div>
+                    <h5 class="fw-bold">Table Reservations</h5>
+                    <p class="text-muted small">Reserve intimate tables, window booths, or patio seating with instant confirmation and buffer spacing.</p>
+                    <div class="mt-auto">
+                        <a href="/reservations/tables/new" class="btn btn-sm btn-outline-danger w-100">Reserve Table</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Private Dining Room Card -->
+            <div class="col-md-3">
+                <div class="card h-100 p-4 text-center card-hover shadow-sm">
+                    <div class="text-primary mb-3"><i class="fa-solid fa-door-closed fa-3x"></i></div>
+                    <h5 class="fw-bold">Private Dining Rooms</h5>
+                    <p class="text-muted small">Host executive meetings and exclusive family gatherings with dedicated sound systems and personal service.</p>
+                    <div class="mt-auto">
+                        <a href="/reservations/rooms/new" class="btn btn-sm btn-outline-primary w-100">Book VIP Suite</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Party Hall Card -->
+            <div class="col-md-3">
+                <div class="card h-100 p-4 text-center card-hover shadow-sm">
+                    <div class="text-warning mb-3"><i class="fa-solid fa-champagne-glasses fa-3x"></i></div>
+                    <h5 class="fw-bold">Party Halls & Banquets</h5>
+                    <p class="text-muted small">Grand celebration ballrooms and rooftop terraces with customizable multi-course catering packages.</p>
+                    <div class="mt-auto">
+                        <a href="/reservations/halls/new" class="btn btn-sm btn-outline-warning text-dark w-100">Reserve Hall</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parking Card -->
+            <div class="col-md-3">
+                <div class="card h-100 p-4 text-center card-hover shadow-sm">
+                    <div class="text-success mb-3"><i class="fa-solid fa-square-parking fa-3x"></i></div>
+                    <h5 class="fw-bold">Guaranteed Parking</h5>
+                    <p class="text-muted small">Pre-book covered, EV charging, or valet parking slots linked directly to your dining reservation.</p>
+                    <div class="mt-auto">
+                        <a href="/reservations/parking/new" class="btn btn-sm btn-outline-success w-100">Reserve Slot</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Restaurant Branches -->
+    <div class="bg-white py-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Our Flagship Locations</h2>
+                    <p class="text-muted mb-0">Each branch offers bespoke architectural design and unique culinary specialties</p>
+                </div>
+                <a href="/branches" class="btn btn-outline-dark">View All Locations <i class="fa-solid fa-arrow-right ms-1"></i></a>
+            </div>
+
+            <div class="row g-4" th:if="${branches}">
+                <div class="col-md-6" th:each="b : ${branches}">
+                    <div class="card overflow-hidden shadow-sm h-100">
+                        <img th:src="${b.imageUrl != null ? b.imageUrl : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'}" class="card-img-top" style="height: 240px; object-fit: cover;" alt="Branch Image">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h4 class="card-title fw-bold text-dark mb-0" th:text="${b.name}">Branch Name</h4>
+                                <span class="badge bg-success" th:if="${b.active}">Open</span>
+                            </div>
+                            <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot text-danger me-1"></i> <span th:text="${b.address + ', ' + b.city + ', ' + b.state + ' ' + b.postalCode}">100 Main St</span></p>
+                            <p class="card-text text-secondary" th:text="${b.description}">Description</p>
+                            <div class="d-flex gap-2 mt-4">
+                                <a th:href="@{'/branches/' + ${b.id}}" class="btn btn-dark flex-grow-1"><i class="fa-solid fa-circle-info me-1"></i> Branch Details</a>
+                                <a th:href="@{'/menu?branchId=' + ${b.id}}" class="btn btn-outline-warning text-dark"><i class="fa-solid fa-utensils me-1"></i> View Menu</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

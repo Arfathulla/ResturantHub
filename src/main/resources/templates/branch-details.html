@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page(${branch.name}, ~{::#content})}">
+<head><title>Branch Details</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <!-- Hero Header -->
+        <div class="card overflow-hidden shadow-sm mb-4">
+            <div class="row g-0">
+                <div class="col-md-6">
+                    <img th:src="${branch.imageUrl != null ? branch.imageUrl : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'}" class="img-fluid h-100 w-100" style="object-fit: cover; min-height: 320px;" alt="Branch Image">
+                </div>
+                <div class="col-md-6 p-4 d-flex flex-column justify-content-center">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-warning text-dark px-2 py-1 fw-bold" th:text="${branch.code}">DT-GOURMET</span>
+                        <span class="badge bg-success" th:if="${branch.active}">Active Location</span>
+                    </div>
+                    <h2 class="fw-bold mb-2" th:text="${branch.name}">Downtown Gourmet Flagship</h2>
+                    <p class="text-secondary mb-3" th:text="${branch.description}">Description</p>
+                    <ul class="list-unstyled text-muted small mb-4">
+                        <li class="mb-1"><i class="fa-solid fa-location-dot text-danger me-2"></i> <span th:text="${branch.address + ', ' + branch.city + ', ' + branch.state + ' ' + branch.postalCode}">100 Main St</span></li>
+                        <li class="mb-1"><i class="fa-solid fa-phone text-success me-2"></i> <span th:text="${branch.phoneNumber}">+1 212 555 0190</span></li>
+                        <li class="mb-1"><i class="fa-solid fa-envelope text-primary me-2"></i> <span th:text="${branch.email}">downtown@restauranthub.com</span></li>
+                        <li><i class="fa-solid fa-clock text-warning me-2"></i> Timezone: <span th:text="${branch.timeZone}">America/New_York</span></li>
+                    </ul>
+
+                    <!-- Action Bar -->
+                    <div class="d-flex flex-wrap gap-2">
+                        <a th:href="@{'/reservations/tables/new?branchId=' + ${branch.id}}" class="btn btn-warning fw-bold px-3">
+                            <i class="fa-solid fa-chair me-1"></i> Book Table
+                        </a>
+                        <a th:href="@{'/menu?branchId=' + ${branch.id}}" class="btn btn-dark px-3">
+                            <i class="fa-solid fa-bowl-food me-1"></i> Order Food
+                        </a>
+                        <a th:href="@{'/reservations/rooms/new?branchId=' + ${branch.id}}" class="btn btn-outline-primary px-3">
+                            <i class="fa-solid fa-door-closed me-1"></i> Private Room
+                        </a>
+                        <a th:href="@{'/reservations/halls/new?branchId=' + ${branch.id}}" class="btn btn-outline-warning text-dark px-3">
+                            <i class="fa-solid fa-champagne-glasses me-1"></i> Party Hall
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Operating Hours -->
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 h-100">
+                    <h4 class="fw-bold mb-3"><i class="fa-regular fa-clock text-warning me-2"></i> Operating Hours</h4>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Day</th>
+                                <th>Opening</th>
+                                <th>Closing</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="h : ${branch.operatingHours}">
+                                <td class="fw-semibold" th:text="${h.dayOfWeek}">MONDAY</td>
+                                <td th:text="${h.closed ? '—' : h.openTime}">09:00</td>
+                                <td th:text="${h.closed ? '—' : h.closeTime}">23:00</td>
+                                <td>
+                                    <span class="badge bg-danger" th:if="${h.closed}">Closed</span>
+                                    <span class="badge bg-success" th:unless="${h.closed}">Open</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Facilities and Parking -->
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 h-100">
+                    <h4 class="fw-bold mb-3"><i class="fa-solid fa-sparkles text-warning me-2"></i> Facilities & Amenities</h4>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <i class="fa-solid fa-wine-glass text-danger fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">Sommelier Bar</h6>
+                                <p class="small text-muted mb-0">Curated organic & vintage wines</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <i class="fa-solid fa-square-parking text-success fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">Dedicated Parking</h6>
+                                <p class="small text-muted mb-0">Covered EV & valet slots</p>
+                                <a th:href="@{'/reservations/parking/new?branchId=' + ${branch.id}}" class="btn btn-sm btn-outline-success mt-2">Book Slot</a>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <i class="fa-solid fa-wifi text-primary fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">High-Speed Wi-Fi</h6>
+                                <p class="small text-muted mb-0">Ultra-low latency connection</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <i class="fa-solid fa-wheelchair text-info fa-2x mb-2"></i>
+                                <h6 class="fw-bold mb-1">Accessibility</h6>
+                                <p class="small text-muted mb-0">ADA wheelchair compliant</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Closures Notice -->
+                    <div th:if="${not #lists.isEmpty(branch.upcomingClosures)}" class="mt-4">
+                        <h6 class="fw-bold text-danger"><i class="fa-solid fa-calendar-xmark me-1"></i> Scheduled Closures & Holidays</h6>
+                        <ul class="list-group list-group-flush small">
+                            <li class="list-group-item px-0" th:each="c : ${branch.upcomingClosures}">
+                                <strong th:text="${c.closureDate}">2026-12-25</strong>: <span th:text="${c.reason}">Christmas Day</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

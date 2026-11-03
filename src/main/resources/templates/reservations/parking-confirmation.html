@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Parking Confirmed', ~{::#content})}">
+<head><title>Parking Confirmed</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4 text-center">
+                    <div class="text-success mb-3">
+                        <i class="fa-solid fa-square-parking fa-4x"></i>
+                    </div>
+                    <span class="badge bg-success px-3 py-1 fs-6 mx-auto mb-2" th:text="${reservation.status}">CONFIRMED</span>
+                    <h2 class="fw-bold mb-1">Parking Slot Reserved!</h2>
+                    <p class="text-muted small">Your bay is ready at <strong th:text="${reservation.branchName}">Downtown Flagship</strong></p>
+
+                    <div class="card bg-light border p-4 my-4 text-start">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <span class="text-muted small">Pass Reference:</span>
+                                <div class="fw-bold fs-5 text-dark" th:text="${reservation.referenceNo}">PR-12345</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Assigned Slot:</span>
+                                <div class="fw-bold fs-5 text-success">
+                                    Bay <span th:text="${reservation.slotNumber}">P-01</span>
+                                    <small class="text-muted fw-normal fs-6" th:if="${reservation.covered}">(Covered)</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Vehicle Type:</span>
+                                <div class="fw-bold" th:text="${reservation.vehicleType}">CAR</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Parking Fee:</span>
+                                <div class="fw-bold text-danger">$<span th:text="${reservation.totalPrice}">10.00</span></div>
+                            </div>
+                            <div class="col-12">
+                                <span class="text-muted small">Valid Interval:</span>
+                                <div class="fw-bold" th:text="${reservation.reservationDate + ' from ' + reservation.startTime + ' to ' + reservation.endTime}">2026-10-18 19:00 - 21:00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2">
+                        <a href="/reservations/my-bookings" class="btn btn-dark px-4"><i class="fa-solid fa-calendar-days me-1"></i> View All Bookings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

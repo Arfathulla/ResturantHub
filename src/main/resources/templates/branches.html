@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Restaurant Locations', ~{::#content})}">
+<head><title>Restaurant Locations</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-7">
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-shop text-warning me-2"></i> Restaurant Branches</h2>
+                <p class="text-muted mb-0">Browse our flagship destinations across New York and beyond</p>
+            </div>
+            <div class="col-md-5">
+                <form th:action="@{/branches}" method="get" class="d-flex">
+                    <input type="text" name="query" class="form-control me-2" placeholder="Search by city, state, or name..." th:value="${searchQuery}">
+                    <button type="submit" class="btn btn-warning fw-bold px-3"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row g-4" th:if="${not #lists.isEmpty(branches)}">
+            <div class="col-md-6" th:each="b : ${branches}">
+                <div class="card overflow-hidden shadow-sm h-100 card-hover">
+                    <img th:src="${b.imageUrl != null ? b.imageUrl : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800'}" class="card-img-top" style="height: 250px; object-fit: cover;" alt="Branch Photo">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h4 class="fw-bold text-dark mb-0" th:text="${b.name}">Downtown Gourmet</h4>
+                            <span class="badge bg-dark" th:text="${b.code}">DT-GOURMET</span>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            <i class="fa-solid fa-location-dot text-danger me-1"></i>
+                            <span th:text="${b.address + ', ' + b.city + ', ' + b.state + ' ' + b.postalCode}">100 Main St</span>
+                        </p>
+                        <p class="card-text text-secondary mb-4" th:text="${b.description}">Description</p>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <a th:href="@{'/branches/' + ${b.id}}" class="btn btn-dark flex-grow-1"><i class="fa-solid fa-circle-info me-1"></i> Branch Details</a>
+                            <a th:href="@{'/reservations/tables/new?branchId=' + ${b.id}}" class="btn btn-warning fw-semibold"><i class="fa-solid fa-chair me-1"></i> Book Table</a>
+                            <a th:href="@{'/menu?branchId=' + ${b.id}}" class="btn btn-outline-dark"><i class="fa-solid fa-bowl-food me-1"></i> Menu</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(branches)}" class="text-center py-5">
+            <i class="fa-solid fa-store-slash text-muted fa-4x mb-3"></i>
+            <h4>No restaurant locations found</h4>
+            <p class="text-muted">Try adjusting your search criteria or clear filters.</p>
+            <a href="/branches" class="btn btn-outline-dark">View All Locations</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

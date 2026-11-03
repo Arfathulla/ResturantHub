@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Your Order Cart', ~{::#content})}">
+<head><title>Your Order Cart</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <h2 class="fw-bold mb-4"><i class="fa-solid fa-cart-shopping text-warning me-2"></i> Your Order Cart</h2>
+
+        <div class="row g-4" th:if="${cart != null and not #lists.isEmpty(cart.items)}">
+            <!-- Items Table -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Selected Items</h5>
+                        <span class="badge bg-dark" th:text="${cart.branchName}">Downtown Flagship</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Dish</th>
+                                    <th>Unit Price</th>
+                                    <th>Qty</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="item : ${cart.items}">
+                                    <td>
+                                        <div class="fw-bold" th:text="${item.itemName}">Wood-Fired Pizza</div>
+                                        <div class="text-muted small" th:if="${item.variantName != null}" th:text="${item.variantName}">Large</div>
+                                        <div class="text-muted small" th:each="a : ${item.addonNames}" th:text="${'+ ' + a}">+ Extra Truffle</div>
+                                    </td>
+                                    <td>$<span th:text="${item.unitPrice}">18.00</span></td>
+                                    <td th:text="${item.quantity}">1</td>
+                                    <td class="fw-bold text-dark">$<span th:text="${item.totalPrice}">18.00</span></td>
+                                    <td>
+                                        <form th:action="@{'/cart/remove/' + ${item.id}}" method="post">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove Item">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-3">
+                        <a href="/menu" class="btn btn-outline-dark btn-sm"><i class="fa-solid fa-plus me-1"></i> Add More Dishes</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary & Checkout -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm p-4">
+                    <h5 class="fw-bold mb-3">Order Summary</h5>
+
+                    <!-- Coupon Code Input -->
+                    <form th:action="@{/cart}" method="get" class="mb-3">
+                        <label class="form-label small fw-semibold">Have a Promotional Coupon?</label>
+                        <div class="input-group">
+                            <input type="text" name="couponCode" class="form-control form-control-sm text-uppercase" placeholder="e.g. WELCOME20" th:value="${couponCode}">
+                            <button type="submit" class="btn btn-outline-dark btn-sm">Apply</button>
+                        </div>
+                        <div class="form-text small text-muted">Try <code>WELCOME20</code> or <code>FLAT10</code></div>
+                    </form>
+
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal:</span>
+                            <span class="fw-semibold">$<span th:text="${cart.subtotal}">0.00</span></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Estimated Tax (5%):</span>
+                            <span>$<span th:text="${cart.taxAmount}">0.00</span></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-success" th:if="${cart.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                            <span>Discount (<span th:text="${cart.appliedCouponCode}">WELCOME20</span>):</span>
+                            <span>-$<span th:text="${cart.discountAmount}">0.00</span></span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fs-5 fw-bold mb-4">
+                            <span>Estimated Total:</span>
+                            <span class="text-danger">$<span th:text="${cart.finalTotal}">0.00</span></span>
+                        </div>
+
+                        <a th:href="${couponCode != null and !couponCode.isBlank()} ? @{/checkout(couponCode=${couponCode})} : @{/checkout}" class="btn btn-warning w-100 fw-bold py-2 shadow-sm">
+                            <i class="fa-solid fa-credit-card me-1"></i> Proceed to Checkout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty Cart Notice -->
+        <div th:if="${cart == null or #lists.isEmpty(cart.items)}" class="text-center py-5">
+            <i class="fa-solid fa-cart-arrow-down text-muted fa-4x mb-3"></i>
+            <h4>Your cart is currently empty</h4>
+            <p class="text-muted">Explore our chef-curated menu to add delicious items to your order.</p>
+            <a href="/menu" class="btn btn-warning fw-bold px-4">Browse Menu</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

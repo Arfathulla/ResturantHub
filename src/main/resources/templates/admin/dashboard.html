@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Admin Portal', ~{::#content})}">
+<head><title>Admin Portal</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-gauge-high text-danger me-2"></i> Executive Administration Portal</h2>
+                <p class="text-muted mb-0">Platform performance, financial recognition, capacity utilization, and user management</p>
+            </div>
+            <a href="/kitchen/queue" class="btn btn-outline-primary fw-semibold"><i class="fa-solid fa-fire-burner me-1"></i> Kitchen Live Queue</a>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3 border-start border-4 border-warning">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small fw-semibold">Total Reservations</span>
+                            <h3 class="fw-bold mb-0 text-dark" th:text="${metrics.totalReservations}">0</h3>
+                        </div>
+                        <i class="fa-solid fa-calendar-check text-warning fs-1"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3 border-start border-4 border-primary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small fw-semibold">Active Food Orders</span>
+                            <h3 class="fw-bold mb-0 text-dark" th:text="${metrics.activeOrdersCount}">0</h3>
+                        </div>
+                        <i class="fa-solid fa-utensils text-primary fs-1"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3 border-start border-4 border-success">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small fw-semibold">Recognized Revenue</span>
+                            <h3 class="fw-bold mb-0 text-success">$<span th:text="${metrics.totalRevenueRecognized}">0.00</span></h3>
+                        </div>
+                        <i class="fa-solid fa-dollar-sign text-success fs-1"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm p-3 border-start border-4 border-danger">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small fw-semibold">Low Stock Alerts</span>
+                            <h3 class="fw-bold mb-0 text-danger" th:text="${#lists.size(metrics.lowStockAlerts)}">0</h3>
+                        </div>
+                        <i class="fa-solid fa-triangle-exclamation text-danger fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservation Category Breakdown -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie text-warning me-2"></i> Reservation Distribution</h5>
+                    <div class="row g-2 text-center">
+                        <div class="col-6 col-sm-3">
+                            <div class="p-3 bg-light rounded border">
+                                <span class="d-block text-muted small">Tables</span>
+                                <h4 class="fw-bold text-dark mb-0" th:text="${metrics.totalTableReservations}">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="p-3 bg-light rounded border">
+                                <span class="d-block text-muted small">VIP Suites</span>
+                                <h4 class="fw-bold text-primary mb-0" th:text="${metrics.totalRoomReservations}">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="p-3 bg-light rounded border">
+                                <span class="d-block text-muted small">Banquets</span>
+                                <h4 class="fw-bold text-warning text-dark mb-0" th:text="${metrics.totalHallReservations}">0</h4>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="p-3 bg-light rounded border">
+                                <span class="d-block text-muted small">Parking</span>
+                                <h4 class="fw-bold text-success mb-0" th:text="${metrics.totalParkingReservations}">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Low-Stock Alerts Card -->
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 h-100">
+                    <h5 class="fw-bold mb-3 text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i> Inventory Shortage Warnings</h5>
+                    <div class="table-responsive" th:if="${not #lists.isEmpty(metrics.lowStockAlerts)}">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>In Stock</th>
+                                    <th>Threshold</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="a : ${metrics.lowStockAlerts}">
+                                    <td class="fw-semibold" th:text="${a.itemName}">Item</td>
+                                    <td><span class="badge bg-danger" th:text="${a.quantityInStock}">2</span></td>
+                                    <td th:text="${a.threshold}">10</td>
+                                    <td><span class="badge bg-secondary">Restock Needed</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div th:if="${#lists.isEmpty(metrics.lowStockAlerts)}" class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-circle-check text-success fa-2x mb-2"></i>
+                        <p class="mb-0 small">All inventory items are currently well-stocked above thresholds.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registered User Accounts Management -->
+        <div class="card shadow-sm p-4">
+            <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-dark me-2"></i> Platform User Directory</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Status</th>
+                            <th>Registered</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="u : ${users}">
+                            <td th:text="${u.id}">1</td>
+                            <td class="fw-bold" th:text="${u.firstName + ' ' + u.lastName}">Alice Walker</td>
+                            <td th:text="${u.email}">alice@example.com</td>
+                            <td>
+                                <span class="badge bg-dark me-1" th:each="r : ${u.roles}" th:text="${r}">ROLE_CUSTOMER</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${u.status == 'ACTIVE'} ? 'bg-success' : 'bg-danger'" th:text="${u.status}">ACTIVE</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(u.createdAt, 'yyyy-MM-dd')}">2026-10-10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

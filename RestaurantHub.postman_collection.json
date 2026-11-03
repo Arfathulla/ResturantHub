@@ -1,0 +1,414 @@
+{
+  "info": {
+    "name": "RestaurantHub Platform REST APIs",
+    "description": "Comprehensive Postman Collection for RestaurantHub — Restaurant Management, Concurrency-Safe Reservations & Online Food Ordering Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & Identity",
+      "item": [
+        {
+          "name": "Register Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Emily\",\n  \"lastName\": \"Clark\",\n  \"email\": \"emily.clark@example.com\",\n  \"password\": \"SecurePass123!\",\n  \"phoneNumber\": \"+12025550188\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login Customer (Auto-saves JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@restauranthub.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@restauranthub.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Authenticated User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Restaurant Branches",
+      "item": [
+        {
+          "name": "Get All Active Branches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/branches",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "branches"]
+            }
+          }
+        },
+        {
+          "name": "Get Branch By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/branches/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "branches", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Multi-Resource Reservations",
+      "item": [
+        {
+          "name": "Book Dining Table (Auto-assignment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": 1,\n  \"reservationDate\": \"2026-10-25\",\n  \"startTime\": \"19:00\",\n  \"endTime\": \"21:00\",\n  \"guestCount\": 4,\n  \"specialRequests\": \"Window booth celebration\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reservations/tables",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reservations", "tables"]
+            }
+          }
+        },
+        {
+          "name": "Reserve VIP Private Dining Suite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": 1,\n  \"roomId\": 1,\n  \"reservationDate\": \"2026-10-25\",\n  \"startTime\": \"18:00\",\n  \"durationHours\": 3,\n  \"guestCount\": 8,\n  \"specialRequests\": \"Sommelier wine pairings\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reservations/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reservations", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Reserve Party Banquet Hall with Catering",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": 1,\n  \"hallId\": 1,\n  \"packageId\": 1,\n  \"eventType\": \"Annual Corporate Gala\",\n  \"reservationDate\": \"2026-11-10\",\n  \"startTime\": \"18:00\",\n  \"durationHours\": 4,\n  \"guestCount\": 60,\n  \"specialRequests\": \"Stage setup and projector\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reservations/halls",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reservations", "halls"]
+            }
+          }
+        },
+        {
+          "name": "Reserve Vehicle Parking Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": 1,\n  \"vehicleType\": \"CAR\",\n  \"vehicleRegistrationNo\": \"NY-ABC1234\",\n  \"reservationDate\": \"2026-10-25\",\n  \"startTime\": \"18:30\",\n  \"endTime\": \"21:30\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reservations/parking",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reservations", "parking"]
+            }
+          }
+        },
+        {
+          "name": "Get All My Consolidated Reservations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reservations/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reservations", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Menu, Cart & Orders",
+      "item": [
+        {
+          "name": "Get Branch Menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/branches/1/menu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "branches", "1", "menu"]
+            }
+          }
+        },
+        {
+          "name": "Add Dish to Cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"branchId\": 1,\n  \"menuItemId\": 3,\n  \"quantity\": 2,\n  \"specialInstructions\": \"Extra cheese and truffle paste\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cart", "items"]
+            }
+          }
+        },
+        {
+          "name": "Get Cart with Coupon Applied",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cart?couponCode=WELCOME20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "cart"],
+              "query": [
+                {
+                  "key": "couponCode",
+                  "value": "WELCOME20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Place Food Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderType\": \"TAKEAWAY\",\n  \"couponCode\": \"WELCOME20\",\n  \"specialInstructions\": \"Pack cutlery and napkins\",\n  \"paymentMethod\": \"MOCK\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Customer Food Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "orders", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Admin & Executive Reports",
+      "item": [
+        {
+          "name": "Get Dashboard KPI Metrics (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reports/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "reports", "dashboard"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

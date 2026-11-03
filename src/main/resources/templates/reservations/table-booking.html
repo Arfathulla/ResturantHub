@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Reserve a Table', ~{::#content})}">
+<head><title>Reserve a Table</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-chair text-danger fa-3x mb-2"></i>
+                        <h3 class="fw-bold">Book a Dining Table</h3>
+                        <p class="text-muted small">Guaranteed conflict-free reservation with automated table assignment</p>
+                    </div>
+
+                    <form th:action="@{/reservations/tables}" th:object="${tableDto}" method="post">
+                        <!-- Branch Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Restaurant Branch</label>
+                            <select th:field="*{branchId}" class="form-select" required>
+                                <option value="">-- Choose Branch --</option>
+                                <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name + ' (' + b.city + ')'}"></option>
+                            </select>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('branchId')}" th:errors="*{branchId}"></div>
+                        </div>
+
+                        <!-- Date and Time Slot -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Date</label>
+                                <input type="date" th:field="*{reservationDate}" class="form-control" required>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('reservationDate')}" th:errors="*{reservationDate}"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Start Time</label>
+                                <input type="time" th:field="*{startTime}" class="form-control" required>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('startTime')}" th:errors="*{startTime}"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">End Time</label>
+                                <input type="time" th:field="*{endTime}" class="form-control" required>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('endTime')}" th:errors="*{endTime}"></div>
+                            </div>
+                        </div>
+
+                        <!-- Guest Count -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Party Size (Guests)</label>
+                            <input type="number" th:field="*{guestCount}" class="form-control" min="1" max="20" placeholder="e.g. 2, 4, 8" required>
+                            <div class="form-text small">Our algorithm automatically pairs your party with optimal booth, window, or patio tables.</div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('guestCount')}" th:errors="*{guestCount}"></div>
+                        </div>
+
+                        <!-- Special Requests -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Special Requests (Optional)</label>
+                            <textarea th:field="*{specialRequests}" class="form-control" rows="2" placeholder="e.g. Anniversary celebration, quiet booth, high chair..."></textarea>
+                        </div>
+
+                        <!-- Concurrency & Cancellation Notice -->
+                        <div class="alert alert-light border small text-muted mb-4">
+                            <i class="fa-solid fa-shield-halved text-primary me-1"></i>
+                            <strong>Reservation Policy:</strong> Holds are protected for 15 minutes. Cancellations are permitted free of charge up to 2 hours before dining time.
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm">
+                            <i class="fa-solid fa-check me-1"></i> Confirm Table Reservation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Reserve Party Hall', ~{::#content})}">
+<head><title>Reserve Party Hall</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm p-4">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-champagne-glasses text-warning fa-3x mb-2"></i>
+                        <h3 class="fw-bold">Reserve Grand Banquet & Party Hall</h3>
+                        <p class="text-muted small">Host unforgettable celebrations, weddings, and corporate seminars</p>
+                    </div>
+
+                    <form th:action="@{/reservations/halls}" th:object="${hallDto}" method="post">
+                        <!-- Branch Selection -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Branch Location</label>
+                                <select th:field="*{branchId}" class="form-select" required>
+                                    <option value="">-- Choose Branch --</option>
+                                    <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Grand Hall Venue</label>
+                                <select th:field="*{hallId}" class="form-select" required>
+                                    <option value="1">Grand Crystal Ballroom (Capacity: 150 guests, Base: $500 + $150/hr)</option>
+                                    <option value="2">Skyline Terrace Hall (Capacity: 80 guests, Base: $350 + $100/hr)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Event Type and Catering Package -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Celebration / Event Type</label>
+                                <input type="text" th:field="*{eventType}" class="form-control" placeholder="e.g. Birthday Party, Wedding, Corporate Banquet" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Catering Package</label>
+                                <select th:field="*{packageId}" class="form-select">
+                                    <option value="">Venue Rental Only (No Catering)</option>
+                                    <option value="1">Silver Gala Buffet ($45.00 / guest)</option>
+                                    <option value="2">Platinum Imperial Feast ($75.00 / guest)</option>
+                                    <option value="3">Corporate Canapes & Reception ($35.00 / guest)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Date, Time, Duration, and Guests -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small">Event Date</label>
+                                <input type="date" th:field="*{reservationDate}" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small">Start Time</label>
+                                <input type="time" th:field="*{startTime}" class="form-control" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small">Duration (Hours)</label>
+                                <input type="number" th:field="*{durationHours}" class="form-control" min="2" max="12" value="4" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold small">Guest Count</label>
+                                <input type="number" th:field="*{guestCount}" class="form-control" min="10" max="150" value="50" required>
+                            </div>
+                        </div>
+
+                        <!-- Special Requests -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Custom Decor, Stage & AV Requests</label>
+                            <textarea th:field="*{specialRequests}" class="form-control" rows="2" placeholder="e.g. DJ booth space, projector screen, customized stage lighting..."></textarea>
+                        </div>
+
+                        <div class="alert alert-light border small text-muted mb-4">
+                            <i class="fa-solid fa-clock text-warning me-1"></i>
+                            <strong>Banqueting Policy:</strong> 60-minute setup and cleanup buffer enforced before and after event. Cancellations must be made at least 48 hours prior to start.
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm">
+                            <i class="fa-solid fa-check me-1"></i> Reserve Banquet Hall
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Private Room Confirmed', ~{::#content})}">
+<head><title>Room Reservation Confirmed</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4 text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fa-solid fa-circle-check fa-4x"></i>
+                    </div>
+                    <span class="badge bg-primary px-3 py-1 fs-6 mx-auto mb-2" th:text="${reservation.status}">CONFIRMED</span>
+                    <h2 class="fw-bold mb-1">VIP Suite Reservation Confirmed!</h2>
+                    <p class="text-muted small">Your private dining room has been reserved at <strong th:text="${reservation.branchName}">Downtown Flagship</strong></p>
+
+                    <div class="card bg-light border p-4 my-4 text-start">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <span class="text-muted small">Reference:</span>
+                                <div class="fw-bold fs-5 text-dark" th:text="${reservation.referenceNo}">RR-12345</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Suite Name:</span>
+                                <div class="fw-bold fs-5 text-primary" th:text="${reservation.roomName}">The Royal Oak Suite</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Date & Duration:</span>
+                                <div class="fw-bold" th:text="${reservation.reservationDate + ' (' + reservation.durationHours + ' Hours)'}">2026-10-18 (2 Hours)</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Time Window:</span>
+                                <div class="fw-bold" th:text="${reservation.startTime + ' - ' + reservation.endTime}">19:00 - 21:00</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Guests:</span>
+                                <div class="fw-bold"><span th:text="${reservation.guestCount}">6</span> Guests</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Total Suite Charge:</span>
+                                <div class="fw-bold text-danger">$<span th:text="${reservation.totalPrice}">220.00</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+                        <a th:href="@{'/reservations/parking/new?branchId=' + ${reservation.branchId}}" class="btn btn-outline-success fw-semibold">
+                            <i class="fa-solid fa-square-parking me-1"></i> Book Parking Slot
+                        </a>
+                        <a href="/reservations/my-bookings" class="btn btn-dark">
+                            <i class="fa-solid fa-calendar-days me-1"></i> View All Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

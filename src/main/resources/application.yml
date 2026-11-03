@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: RestaurantHub
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: false # set true in prod via application-prod.yml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+# Application specific properties
+app:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24 hours
+  payment:
+    provider: ${PAYMENT_GATEWAY_PROVIDER:MOCK}
+    mock:
+      auto-succeed: true
+    stripe:
+      api-key: ${STRIPE_API_KEY:sk_test_placeholder}
+      webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+    razorpay:
+      key-id: ${RAZORPAY_KEY_ID:rzp_test_placeholder}
+      key-secret: ${RAZORPAY_KEY_SECRET:rzp_secret_placeholder}
+  reservation:
+    hold-duration-minutes: 15
+    table-buffer-minutes: 15
+    room-buffer-minutes: 30
+    hall-buffer-minutes: 60
+  zomato:
+    enabled: ${ZOMATO_INTEGRATION_ENABLED:true}
+    api-key: ${ZOMATO_API_KEY:zom_partner_live_8f3a9e2d1c7b5a04e6}
+    restaurant-id: ${ZOMATO_RESTAURANT_ID:zom_res_50892}
+    api-url: ${ZOMATO_API_URL:https://api.zomato.com/v1/partner}
+    auto-accept: ${ZOMATO_AUTO_ACCEPT:true}
+    simulate-network-sync: ${ZOMATO_SIMULATE_NETWORK:true}

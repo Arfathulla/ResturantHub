@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Table Reservation Confirmed', ~{::#content})}">
+<head><title>Reservation Confirmed</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4 text-center">
+                    <div class="text-success mb-3">
+                        <i class="fa-solid fa-circle-check fa-4x"></i>
+                    </div>
+                    <span class="badge bg-success px-3 py-1 fs-6 mx-auto mb-2" th:text="${reservation.status}">CONFIRMED</span>
+                    <h2 class="fw-bold mb-1">Table Reservation Confirmed!</h2>
+                    <p class="text-muted small">We look forward to hosting you at <strong th:text="${reservation.branchName}">Downtown Flagship</strong></p>
+
+                    <div class="card bg-light border p-4 my-4 text-start">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <span class="text-muted small">Booking Reference:</span>
+                                <div class="fw-bold fs-5 text-dark" th:text="${reservation.referenceNo}">TR-20261018-ABCD</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Assigned Table:</span>
+                                <div class="fw-bold fs-5 text-danger">
+                                    Table <span th:text="${reservation.tableNumber}">T-01</span>
+                                    <small class="text-muted fw-normal fs-6">(<span th:text="${reservation.section}">MAIN_DINING</span>)</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Date & Time:</span>
+                                <div class="fw-bold" th:text="${reservation.reservationDate + ' from ' + reservation.startTime + ' to ' + reservation.endTime}">2026-10-18 19:00 - 21:00</div>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted small">Guests:</span>
+                                <div class="fw-bold"><span th:text="${reservation.guestCount}">2</span> People</div>
+                            </div>
+                            <div class="col-12" th:if="${reservation.specialRequests != null and !reservation.specialRequests.isBlank()}">
+                                <span class="text-muted small">Special Requests:</span>
+                                <div class="small fst-italic" th:text="${reservation.specialRequests}">None</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Next Actions: Cross-module integrations -->
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-2">
+                        <a th:href="@{'/menu?branchId=' + ${reservation.branchId}}" class="btn btn-warning fw-bold">
+                            <i class="fa-solid fa-utensils me-1"></i> Pre-Order Dine-In Food
+                        </a>
+                        <a th:href="@{'/reservations/parking/new?branchId=' + ${reservation.branchId}}" class="btn btn-outline-success fw-semibold">
+                            <i class="fa-solid fa-square-parking me-1"></i> Reserve Parking Slot
+                        </a>
+                        <a href="/reservations/my-bookings" class="btn btn-outline-dark">
+                            <i class="fa-solid fa-calendar-days me-1"></i> My Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

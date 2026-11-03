@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('My Reservations', ~{::#content})}">
+<head><title>My Reservations</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-calendar-check text-warning me-2"></i> My Bookings & Reservations</h2>
+                <p class="text-muted mb-0">Unified management across dining tables, private suites, banquets, and parking</p>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-warning dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
+                    <i class="fa-solid fa-plus me-1"></i> New Reservation
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="/reservations/tables/new"><i class="fa-solid fa-chair text-danger me-2"></i> Dining Table</a></li>
+                    <li><a class="dropdown-item" href="/reservations/rooms/new"><i class="fa-solid fa-door-closed text-primary me-2"></i> Private VIP Suite</a></li>
+                    <li><a class="dropdown-item" href="/reservations/halls/new"><i class="fa-solid fa-champagne-glasses text-warning me-2"></i> Party Banquet Hall</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/reservations/parking/new"><i class="fa-solid fa-square-parking text-success me-2"></i> Parking Slot</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills mb-4 gap-2" id="bookingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-semibold" id="tables-tab" data-bs-toggle="pill" data-bs-target="#tables" type="button">
+                    <i class="fa-solid fa-chair me-1"></i> Tables (<span th:text="${#lists.size(tables)}">0</span>)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold" id="rooms-tab" data-bs-toggle="pill" data-bs-target="#rooms" type="button">
+                    <i class="fa-solid fa-door-closed me-1"></i> Private Rooms (<span th:text="${#lists.size(rooms)}">0</span>)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold" id="halls-tab" data-bs-toggle="pill" data-bs-target="#halls" type="button">
+                    <i class="fa-solid fa-champagne-glasses me-1"></i> Party Halls (<span th:text="${#lists.size(halls)}">0</span>)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold" id="parking-tab" data-bs-toggle="pill" data-bs-target="#parking" type="button">
+                    <i class="fa-solid fa-square-parking me-1"></i> Parking (<span th:text="${#lists.size(parking)}">0</span>)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="bookingTabContent">
+            <!-- Tables Tab -->
+            <div class="tab-pane fade show active" id="tables" role="tabpanel">
+                <div class="card shadow-sm p-4" th:if="${not #lists.isEmpty(tables)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Branch</th>
+                                    <th>Table</th>
+                                    <th>Guests</th>
+                                    <th>Date & Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="t : ${tables}">
+                                    <td><strong th:text="${t.referenceNo}">TR-123</strong></td>
+                                    <td th:text="${t.branchName}">Downtown Flagship</td>
+                                    <td>Table <span th:text="${t.tableNumber}">T-01</span> (<span th:text="${t.section}">MAIN</span>)</td>
+                                    <td><span th:text="${t.guestCount}">2</span> People</td>
+                                    <td th:text="${t.reservationDate + ' ' + t.startTime + ' - ' + t.endTime}">2026-10-18 19:00 - 21:00</td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${t.status == 'CONFIRMED' or t.status == 'COMPLETED'} ? 'bg-success' : (${t.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                              th:text="${t.status}">CONFIRMED</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(tables)}" class="text-center py-4 bg-white rounded border">
+                    <p class="text-muted mb-0">No table reservations found.</p>
+                </div>
+            </div>
+
+            <!-- Rooms Tab -->
+            <div class="tab-pane fade" id="rooms" role="tabpanel">
+                <div class="card shadow-sm p-4" th:if="${not #lists.isEmpty(rooms)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Branch</th>
+                                    <th>Suite</th>
+                                    <th>Duration</th>
+                                    <th>Date & Time</th>
+                                    <th>Price</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="r : ${rooms}">
+                                    <td><strong th:text="${r.referenceNo}">RR-123</strong></td>
+                                    <td th:text="${r.branchName}">Downtown Flagship</td>
+                                    <td class="text-primary fw-bold" th:text="${r.roomName}">Royal Suite</td>
+                                    <td><span th:text="${r.durationHours}">2</span> Hours</td>
+                                    <td th:text="${r.reservationDate + ' ' + r.startTime + ' - ' + r.endTime}">2026-10-18 19:00</td>
+                                    <td class="fw-bold text-danger">$<span th:text="${r.totalPrice}">220.00</span></td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${r.status == 'CONFIRMED' or r.status == 'COMPLETED'} ? 'bg-success' : (${r.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                              th:text="${r.status}">CONFIRMED</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(rooms)}" class="text-center py-4 bg-white rounded border">
+                    <p class="text-muted mb-0">No private dining room bookings found.</p>
+                </div>
+            </div>
+
+            <!-- Halls Tab -->
+            <div class="tab-pane fade" id="halls" role="tabpanel">
+                <div class="card shadow-sm p-4" th:if="${not #lists.isEmpty(halls)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Branch</th>
+                                    <th>Hall</th>
+                                    <th>Event</th>
+                                    <th>Package</th>
+                                    <th>Date & Time</th>
+                                    <th>Total Charge</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="h : ${halls}">
+                                    <td><strong th:text="${h.referenceNo}">HR-123</strong></td>
+                                    <td th:text="${h.branchName}">Downtown Flagship</td>
+                                    <td class="text-warning text-dark fw-bold" th:text="${h.hallName}">Crystal Ballroom</td>
+                                    <td th:text="${h.eventType}">Wedding</td>
+                                    <td th:text="${h.packageName}">Silver Gala</td>
+                                    <td th:text="${h.reservationDate + ' ' + h.startTime + ' - ' + h.endTime}">2026-10-18 18:00</td>
+                                    <td class="fw-bold text-danger">$<span th:text="${h.totalPrice}">3350.00</span></td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${h.status == 'CONFIRMED' or h.status == 'COMPLETED'} ? 'bg-success' : (${h.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                              th:text="${h.status}">CONFIRMED</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(halls)}" class="text-center py-4 bg-white rounded border">
+                    <p class="text-muted mb-0">No banquet or party hall bookings found.</p>
+                </div>
+            </div>
+
+            <!-- Parking Tab -->
+            <div class="tab-pane fade" id="parking" role="tabpanel">
+                <div class="card shadow-sm p-4" th:if="${not #lists.isEmpty(parking)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Pass Reference</th>
+                                    <th>Branch</th>
+                                    <th>Bay</th>
+                                    <th>Vehicle</th>
+                                    <th>Interval</th>
+                                    <th>Fee</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="p : ${parking}">
+                                    <td><strong th:text="${p.referenceNo}">PR-123</strong></td>
+                                    <td th:text="${p.branchName}">Downtown Flagship</td>
+                                    <td class="text-success fw-bold">Bay <span th:text="${p.slotNumber}">P-01</span></td>
+                                    <td th:text="${p.vehicleType}">CAR</td>
+                                    <td th:text="${p.reservationDate + ' ' + p.startTime + ' - ' + p.endTime}">2026-10-18 19:00 - 21:00</td>
+                                    <td class="fw-bold">$<span th:text="${p.totalPrice}">10.00</span></td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${p.status == 'CONFIRMED' or p.status == 'COMPLETED'} ? 'bg-success' : (${p.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                              th:text="${p.status}">CONFIRMED</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(parking)}" class="text-center py-4 bg-white rounded border">
+                    <p class="text-muted mb-0">No parking reservations found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

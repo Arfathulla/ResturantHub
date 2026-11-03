@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: restauranthub-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: restauranthub_db
+      MYSQL_ROOT_PASSWORD: As@119119
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p","As@119119"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  app:
+    build: .
+    container_name: restauranthub-app
+    restart: on-failure
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_NAME: restauranthub_db
+      DB_USERNAME: root
+      DB_PASSWORD: As@119119
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      PAYMENT_GATEWAY_PROVIDER: ${PAYMENT_GATEWAY_PROVIDER:-MOCK}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+volumes:
+  mysql_data:

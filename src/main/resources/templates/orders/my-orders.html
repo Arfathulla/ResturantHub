@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('My Food Orders', ~{::#content})}">
+<head><title>My Food Orders</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-receipt text-warning me-2"></i> Food Order History</h2>
+                <p class="text-muted mb-0">Track active deliveries and review previous culinary receipts</p>
+            </div>
+            <a href="/menu" class="btn btn-warning fw-bold"><i class="fa-solid fa-plus me-1"></i> New Food Order</a>
+        </div>
+
+        <div class="card shadow-sm p-4" th:if="${not #lists.isEmpty(orders)}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Order Ref</th>
+                            <th>Branch</th>
+                            <th>Type</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Placed At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="o : ${orders}">
+                            <td><strong class="text-dark" th:text="${o.orderNumber}">ORD-123</strong></td>
+                            <td th:text="${o.branchName}">Downtown Flagship</td>
+                            <td><span class="badge bg-secondary" th:text="${o.orderType}">TAKEAWAY</span></td>
+                            <td class="fw-bold text-danger">$<span th:text="${o.finalTotal}">24.50</span></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${o.status == 'COMPLETED'} ? 'bg-success' : (${o.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                      th:text="${o.status}">PLACED</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(o.createdAt, 'yyyy-MM-dd HH:mm')}">2026-10-18 10:00</td>
+                            <td>
+                                <a th:href="@{'/orders/' + ${o.orderNumber}}" class="btn btn-sm btn-outline-dark">
+                                    <i class="fa-solid fa-eye me-1"></i> Track / View
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(orders)}" class="text-center py-5">
+            <i class="fa-solid fa-box-open text-muted fa-4x mb-3"></i>
+            <h4>No food orders placed yet</h4>
+            <p class="text-muted">Start browsing our artisanal dishes to place your first takeaway or delivery order.</p>
+            <a href="/menu" class="btn btn-warning fw-bold px-4">Browse Menu</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

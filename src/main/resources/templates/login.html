@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Sign In', ~{::#content})}">
+<head><title>Sign In</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card shadow-sm p-4">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-utensils text-warning fa-3x mb-2"></i>
+                        <h3 class="fw-bold">Sign In to RestaurantHub</h3>
+                        <p class="text-muted small">Access your reservations, food orders, and profile</p>
+                    </div>
+
+                    <div th:if="${param.error}" class="alert alert-danger small py-2">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Invalid email address or password.
+                    </div>
+                    <div th:if="${param.logout}" class="alert alert-info small py-2">
+                        <i class="fa-solid fa-circle-check me-1"></i> You have been successfully signed out.
+                    </div>
+                    <div th:if="${param.expired}" class="alert alert-warning small py-2">
+                        <i class="fa-solid fa-clock me-1"></i> Session expired. Please sign in again.
+                    </div>
+
+                    <form th:action="@{/login}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
+                                <input type="email" id="emailInput" name="username" class="form-control" placeholder="name@example.com" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label fw-semibold small">Password</label>
+                                <a href="/forgot-password" class="small text-decoration-none">Forgot password?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                                <input type="password" id="passwordInput" name="password" class="form-control" placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold py-2 mt-2 shadow-sm">
+                            <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p class="small text-muted mb-0">Don't have an account? <a href="/register" class="fw-semibold text-warning text-dark">Register here</a></p>
+                    </div>
+
+                    <!-- Demo Credentials Helper -->
+                    <div class="mt-4 pt-3 border-top">
+                        <span class="badge bg-secondary mb-2">Demo Testing Accounts (Password: <code>password</code>)</span>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillDemo('customer@restauranthub.com')">Customer</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillDemo('admin@restauranthub.com')">Admin</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillDemo('manager@restauranthub.com')">Manager</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillDemo('kitchen@restauranthub.com')">Kitchen</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="fillDemo('staff@restauranthub.com')">Staff</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fillDemo(email) {
+            document.getElementById('emailInput').value = email;
+            document.getElementById('passwordInput').value = 'password';
+        }
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: page('Reserve Private Dining Room', ~{::#content})}">
+<head><title>Reserve Private Dining Room</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4">
+                    <div class="text-center mb-4">
+                        <i class="fa-solid fa-door-closed text-primary fa-3x mb-2"></i>
+                        <h3 class="fw-bold">Reserve a VIP Private Dining Suite</h3>
+                        <p class="text-muted small">Intimate luxury settings with dedicated butler service and acoustic privacy</p>
+                    </div>
+
+                    <form th:action="@{/reservations/rooms}" th:object="${roomDto}" method="post">
+                        <!-- Branch Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Branch Location</label>
+                            <select th:field="*{branchId}" class="form-select" required>
+                                <option value="">-- Choose Branch Location --</option>
+                                <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Room Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Private Dining Suite</label>
+                            <select th:field="*{roomId}" class="form-select" required>
+                                <option value="1">The Royal Oak Suite (Capacity: 14 guests, Base: $100 + $60/hr)</option>
+                                <option value="2">The Executive Cellar (Capacity: 10 guests, Base: $80 + $50/hr)</option>
+                            </select>
+                        </div>
+
+                        <!-- Date and Start Time -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Reservation Date</label>
+                                <input type="date" th:field="*{reservationDate}" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Start Time</label>
+                                <input type="time" th:field="*{startTime}" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold small">Duration (Hours)</label>
+                                <input type="number" th:field="*{durationHours}" class="form-control" min="1" max="8" value="2" required>
+                            </div>
+                        </div>
+
+                        <!-- Guest Count -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Expected Guest Count</label>
+                            <input type="number" th:field="*{guestCount}" class="form-control" min="1" max="14" value="6" required>
+                        </div>
+
+                        <!-- Special Requests -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Bespoke Requirements / Sommelier Notes</label>
+                            <textarea th:field="*{specialRequests}" class="form-control" rows="2" placeholder="e.g. Wine pairings, presentation display connection..."></textarea>
+                        </div>
+
+                        <div class="alert alert-light border small text-muted mb-4">
+                            <i class="fa-solid fa-clock text-warning me-1"></i>
+                            <strong>Private Suite Policy:</strong> Buffer spacing of 30 minutes is maintained between room bookings. Cancellations permitted up to 12 hours prior to scheduled dining.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
+                            <i class="fa-solid fa-calendar-check me-1"></i> Reserve VIP Suite
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
