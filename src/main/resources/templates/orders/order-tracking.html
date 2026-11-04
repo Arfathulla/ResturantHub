@@ -95,21 +95,12 @@
                     </div>
                 </div>
 
-                <!-- Delivery Partner Card (shows only when OUT_FOR_DELIVERY) -->
-                <div id="driverCard" class="card shadow-sm p-3 mb-4 border-start border-4 border-warning" style="display:none;">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width:55px;height:55px;font-size:24px;">
-                            🛵
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold">Delivery Partner Assigned</div>
-                            <div id="driverDetails" class="text-muted small">Ravi Kumar · KA-05-AB-1234</div>
-                        </div>
-                        <div>
-                            <a href="tel:+919876543210" class="btn btn-sm btn-outline-success">
-                                <i class="fa-solid fa-phone me-1"></i>Call
-                            </a>
-                        </div>
+                <!-- Cancelled Banner (only shown when order is cancelled) -->
+                <div id="cancelledBanner" class="alert alert-danger border-0 shadow-sm mb-4 d-flex align-items-center gap-3" style="display:none;">
+                    <i class="fa-solid fa-ban fa-2x text-danger"></i>
+                    <div>
+                        <strong>Order Cancelled</strong><br>
+                        <span class="small">This order has been cancelled. If payment was made, a refund will be processed within 3-5 business days.</span>
                     </div>
                 </div>
 
@@ -219,12 +210,19 @@
             if (pb && data.progress !== undefined) {
                 pb.style.width = data.progress + '%';
                 if (data.progress === 100) { pb.classList.remove('progress-bar-animated'); pb.classList.remove('bg-warning'); pb.classList.add('bg-success'); }
+                if (data.status === 'CANCELLED') { pb.classList.remove('progress-bar-animated'); pb.classList.remove('bg-warning'); pb.classList.add('bg-danger'); pb.style.width = '100%'; }
             }
             if (pp) pp.textContent = (data.progress || 0) + '%';
 
             // Update ETA message
             const etaText = document.getElementById('etaText');
             if (etaText) etaText.textContent = data.etaMessage || '';
+
+            // Show cancelled banner if applicable
+            const cancelledBanner = document.getElementById('cancelledBanner');
+            if (cancelledBanner) {
+                cancelledBanner.style.display = (data.status === 'CANCELLED') ? 'flex' : 'none';
+            }
 
             // Update stepper
             const idx = statusOrder.indexOf(data.status);
@@ -242,18 +240,6 @@
                     if (conn) conn.style.background = '#ffc107';
                 }
             });
-
-            // Show driver card for OUT_FOR_DELIVERY
-            const driverCard = document.getElementById('driverCard');
-            if (driverCard) {
-                if (data.status === 'OUT_FOR_DELIVERY') {
-                    driverCard.style.display = 'block';
-                    const dd = document.getElementById('driverDetails');
-                    if (dd && data.driverInfo) dd.textContent = data.driverInfo;
-                } else {
-                    driverCard.style.display = 'none';
-                }
-            }
         }
 
         // Initialize with current status

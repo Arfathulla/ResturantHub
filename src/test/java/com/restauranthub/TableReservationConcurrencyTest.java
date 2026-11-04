@@ -145,7 +145,7 @@ class TableReservationConcurrencyTest {
         var response = tableReservationService.reserveTable(customer, request);
 
         assertNotNull(response);
-        assertEquals(ReservationStatus.CONFIRMED, response.getStatus());
+        assertEquals(ReservationStatus.CONFIRMED.name(), response.getStatus());
         assertEquals("T-01", response.getTableNumber());
         verify(reservationRepository, times(1)).save(any(TableReservation.class));
     }

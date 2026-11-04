@@ -1,13 +1,22 @@
 spring:
   application:
-    name: RestaurantHub
+    name: BhojanaBangalore
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:bhojana_bangalore_db}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:As@119119}
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
+    hibernate:
+      ddl-auto: validate
     open-in-view: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
         jdbc:
           time_zone: UTC
   flyway:

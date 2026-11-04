@@ -15,6 +15,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Collections;
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class FoodOrderingWebController {
@@ -109,18 +112,50 @@ public class FoodOrderingWebController {
         }
     }
 
+    @GetMapping({"/orders/tracking", "/tracking", "/delivery-tracker"})
+    public String showDeliveryTrackerPage(Model model) {
+        User user = null;
+        try {
+            user = authService.getCurrentAuthenticatedUser();
+        } catch (Exception ignored) {
+        }
+
+        if (user != null) {
+            List<OrderResponseDto> activeOrders = orderService.getCustomerActiveOrders(user.getId());
+            model.addAttribute("activeOrders", activeOrders);
+            model.addAttribute("hasActiveOrders", !activeOrders.isEmpty());
+            model.addAttribute("isAuthenticated", true);
+        } else {
+            model.addAttribute("activeOrders", Collections.emptyList());
+            model.addAttribute("hasActiveOrders", false);
+            model.addAttribute("isAuthenticated", false);
+        }
+        return "orders/delivery-tracker";
+    }
+
     @GetMapping("/orders/{orderNumber}")
-    public String showOrderTrackingPage(@PathVariable String orderNumber, Model model) {
-        User user = authService.getCurrentAuthenticatedUser();
-        OrderResponseDto order = orderService.getOrderByNumber(orderNumber, user);
-        model.addAttribute("order", order);
-        return "orders/order-tracking";
+    public String showOrderTrackingPage(@PathVariable String orderNumber,
+                                        RedirectAttributes redirectAttributes,
+                                        Model model) {
+        try {
+            User user = authService.getCurrentAuthenticatedUser();
+            OrderResponseDto order = orderService.getOrderByNumber(orderNumber, user);
+            model.addAttribute("order", order);
+            return "orders/order-tracking";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/orders/tracking";
+        }
     }
 
     @GetMapping("/orders/my-orders")
     public String showMyOrders(Model model) {
         User user = authService.getCurrentAuthenticatedUser();
-        model.addAttribute("orders", orderService.getCustomerOrders(user.getId()));
+        List<OrderResponseDto> allOrders = orderService.getCustomerOrders(user.getId());
+        List<OrderResponseDto> activeOrders = orderService.getCustomerActiveOrders(user.getId());
+        model.addAttribute("orders", allOrders);
+        model.addAttribute("activeOrders", activeOrders);
+        model.addAttribute("hasActiveOrders", !activeOrders.isEmpty());
         return "orders/my-orders";
     }
 }

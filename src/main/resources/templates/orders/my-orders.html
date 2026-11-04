@@ -8,12 +8,48 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="fw-bold mb-1"><i class="fa-solid fa-receipt text-warning me-2"></i> Food Order History</h2>
-                <p class="text-muted mb-0">Track active deliveries and review previous culinary receipts</p>
+                <p class="text-muted mb-0">Track active deliveries and review your previous Bhojana Bangalore culinary orders</p>
             </div>
-            <a href="/menu" class="btn btn-warning fw-bold"><i class="fa-solid fa-plus me-1"></i> New Food Order</a>
+            <div class="d-flex gap-2">
+                <a href="/orders/tracking" class="btn btn-outline-dark fw-semibold"><i class="fa-solid fa-motorcycle me-1"></i> Live Tracker</a>
+                <a href="/menu" class="btn btn-warning fw-bold"><i class="fa-solid fa-plus me-1"></i> New Order</a>
+            </div>
         </div>
 
+        <!-- ACTIVE DELIVERIES SECTION: Shows live tracker only if active orders exist -->
+        <div th:if="${hasActiveOrders}" class="mb-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-truck-fast text-warning me-2"></i> Active Orders in Progress</h5>
+            <div class="row g-3">
+                <div class="col-md-6" th:each="ao : ${activeOrders}">
+                    <div class="card shadow-sm border-start border-4 border-warning p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="text-dark" th:text="${ao.orderNumber}">ORD-123</strong>
+                            <span class="badge"
+                                  th:classappend="${ao.status == 'COMPLETED'} ? 'bg-success' : (${ao.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                  th:text="${ao.status}">PLACED</span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <span th:text="${ao.branchName}">Branch</span> &bull; ₹<span th:text="${ao.finalTotal}">0.00</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px;">
+                            <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                                 role="progressbar"
+                                 th:style="'width: ' + ${ao.tracking != null ? ao.tracking.progressPercent : 20} + '%;'"></div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted fw-semibold" th:text="${ao.tracking != null ? ao.tracking.statusLabel : ao.status}">Order Placed</small>
+                            <a th:href="@{'/orders/' + ${ao.orderNumber}}" class="btn btn-sm btn-dark">
+                                <i class="fa-solid fa-eye me-1"></i> Track Live
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALL ORDERS TABLE -->
         <div class="card shadow-sm p-4" th:if="${not #lists.isEmpty(orders)}">
+            <h5 class="fw-bold mb-3">All Order History</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -30,15 +66,15 @@
                     <tbody>
                         <tr th:each="o : ${orders}">
                             <td><strong class="text-dark" th:text="${o.orderNumber}">ORD-123</strong></td>
-                            <td th:text="${o.branchName}">Downtown Flagship</td>
-                            <td><span class="badge bg-secondary" th:text="${o.orderType}">TAKEAWAY</span></td>
-                            <td class="fw-bold text-danger">$<span th:text="${o.finalTotal}">24.50</span></td>
+                            <td th:text="${o.branchName}">MG Road</td>
+                            <td><span class="badge bg-secondary" th:text="${o.orderType}">DELIVERY</span></td>
+                            <td class="fw-bold text-danger">₹<span th:text="${o.finalTotal}">240.00</span></td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${o.status == 'COMPLETED'} ? 'bg-success' : (${o.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                      th:classappend="${o.status == 'COMPLETED' or o.status == 'DELIVERED'} ? 'bg-success' : (${o.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
                                       th:text="${o.status}">PLACED</span>
                             </td>
-                            <td class="small text-muted" th:text="${#temporals.format(o.createdAt, 'yyyy-MM-dd HH:mm')}">2026-10-18 10:00</td>
+                            <td class="small text-muted" th:text="${#temporals.format(o.createdAt, 'yyyy-MM-dd HH:mm')}">2026-11-04 10:00</td>
                             <td>
                                 <a th:href="@{'/orders/' + ${o.orderNumber}}" class="btn btn-sm btn-outline-dark">
                                     <i class="fa-solid fa-eye me-1"></i> Track / View
@@ -50,11 +86,18 @@
             </div>
         </div>
 
-        <div th:if="${#lists.isEmpty(orders)}" class="text-center py-5">
-            <i class="fa-solid fa-box-open text-muted fa-4x mb-3"></i>
-            <h4>No food orders placed yet</h4>
-            <p class="text-muted">Start browsing our artisanal dishes to place your first takeaway or delivery order.</p>
-            <a href="/menu" class="btn btn-warning fw-bold px-4">Browse Menu</a>
+        <!-- EMPTY STATE: Displayed when no orders exist at all -->
+        <div th:if="${#lists.isEmpty(orders)}" class="card shadow-sm p-5 text-center border-0 bg-white">
+            <div class="mb-3">
+                <i class="fa-solid fa-box-open text-muted fa-4x mb-3"></i>
+            </div>
+            <h4 class="fw-bold text-dark">No active deliveries. Place an order to track your delivery.</h4>
+            <p class="text-muted mb-4">Start browsing our authentic Bangalore delicacies to place your first takeaway or delivery order.</p>
+            <div>
+                <a href="/menu" class="btn btn-warning fw-bold px-4 py-2">
+                    <i class="fa-solid fa-utensils me-1"></i> Browse Menu
+                </a>
+            </div>
         </div>
     </div>
 </div>

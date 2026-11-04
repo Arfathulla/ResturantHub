@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,8 +48,7 @@ public class OrderService {
     private final TableReservationRepository tableReservationRepository;
     private final PaymentRepository paymentRepository;
     private final ZomatoIntegrationService zomatoIntegrationService;
-
-    
+    private final DeliveryTrackingRepository deliveryTrackingRepository;
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public OrderResponseDto placeOrder(User user, PlaceOrderRequestDto request) {
@@ -109,7 +108,7 @@ public class OrderService {
 
         // Server-side financial calculations
         CartResponseDto cartTotals = cartService.calculateCartTotals(cart, request.getCouponCode());
-        BigDecimal deliveryFee = (request.getOrderType() == OrderType.DELIVERY) ? new BigDecimal("5.00") : BigDecimal.ZERO;
+        BigDecimal deliveryFee = (request.getOrderType() == OrderType.DELIVERY) ? new BigDecimal("50.00") : BigDecimal.ZERO;
         BigDecimal finalTotal = cartTotals.getFinalTotal().add(deliveryFee);
 
         Coupon coupon = null;
@@ -190,7 +189,7 @@ public class OrderService {
             couponRedemptionRepository.save(redemption);
         }
 
-        // Record Initial State Transition
+        // Record Initial State Transition in status history
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .order(savedOrder)
                 .fromStatus(null)
@@ -200,7 +199,7 @@ public class OrderService {
                 .build();
         statusHistoryRepository.save(history);
 
-        // Process realistic Payment record
+        // Process Payment record
         String paymentMethod = (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank())
                 ? request.getPaymentMethod().toUpperCase() : "CARD";
         PaymentProvider provider = switch (paymentMethod) {
@@ -222,7 +221,7 @@ public class OrderService {
                 .user(user)
                 .order(savedOrder)
                 .amount(finalTotal)
-                .currency("USD")
+                .currency("INR")
                 .provider(provider)
                 .paymentMethod(paymentMethod)
                 .paymentDetails(details)
@@ -237,7 +236,7 @@ public class OrderService {
 
         savedOrder.setPaymentMethod(paymentMethod);
 
-        // Sync with Zomato Partner API using configured Zomato API Key
+        // Sync with Zomato Partner API if configured
         if (zomatoIntegrationService != null) {
             try {
                 ZomatoOrderSyncResponse zomatoResp = zomatoIntegrationService.syncOrder(savedOrder, payment);
@@ -251,18 +250,28 @@ public class OrderService {
         }
         savedOrder = orderRepository.save(savedOrder);
 
+        // CREATE AND PERSIST DELIVERY TRACKING RECORD IN MYSQL
+        if (deliveryTrackingRepository != null) {
+            DeliveryTracking tracking = DeliveryTracking.builder()
+                    .order(savedOrder)
+                    .status(savedOrder.getStatus())
+                    .statusUpdatedAt(Instant.now())
+                    .build();
+            deliveryTrackingRepository.save(tracking);
+        }
+
         // Clear user cart
         cartService.clearCart(user);
 
-        log.info("Order placed & paid successfully: {} by user: {} (Final Total: ${}, Method: {}, Zomato ID: {})",
+        log.info("Order placed & paid successfully: {} by user: {} (Final Total: ₹{}, Method: {}, Zomato ID: {})",
                 orderNumber, user.getEmail(), finalTotal, paymentMethod, savedOrder.getZomatoOrderId());
         return mapToDto(savedOrder);
     }
 
     @Transactional
-    public OrderResponseDto updateOrderStatus(String orderNumber, UpdateOrderStatusRequestDto request, User currentUser) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", orderNumber));
+    public OrderResponseDto updateOrderStatus(String orderIdentifier, UpdateOrderStatusRequestDto request, User currentUser) {
+        Order order = findOrderByNumberOrId(orderIdentifier);
+        String orderNumber = order.getOrderNumber();
 
         OrderStatus currentStatus = order.getStatus();
         OrderStatus newStatus = request.getNewStatus();
@@ -280,7 +289,8 @@ public class OrderService {
                 if (!order.getUser().getId().equals(currentUser.getId())) {
                     throw new UnauthorizedException("Cannot cancel another customer's order.");
                 }
-                if (currentStatus != OrderStatus.PLACED && currentStatus != OrderStatus.ACCEPTED) {
+                if (currentStatus != OrderStatus.PLACED && currentStatus != OrderStatus.ORDER_PLACED &&
+                    currentStatus != OrderStatus.ACCEPTED && currentStatus != OrderStatus.ORDER_CONFIRMED) {
                     throw new BadRequestException("INVALID_STATUS", "Orders that are already in preparation cannot be cancelled.");
                 }
             } else {
@@ -312,6 +322,7 @@ public class OrderService {
         order.setStatus(newStatus);
         Order updated = orderRepository.save(order);
 
+        // Update status history
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .order(updated)
                 .fromStatus(currentStatus)
@@ -320,6 +331,15 @@ public class OrderService {
                 .comment(request.getComment() != null ? request.getComment() : "Status updated to " + newStatus)
                 .build();
         statusHistoryRepository.save(history);
+
+        // Update DeliveryTracking record in MySQL
+        if (deliveryTrackingRepository != null) {
+            DeliveryTracking tracking = deliveryTrackingRepository.findByOrderId(updated.getId())
+                    .orElseGet(() -> DeliveryTracking.builder().order(updated).build());
+            tracking.setStatus(newStatus);
+            tracking.setStatusUpdatedAt(Instant.now());
+            deliveryTrackingRepository.save(tracking);
+        }
 
         if (updated.getZomatoOrderId() != null && zomatoIntegrationService != null) {
             try {
@@ -336,8 +356,7 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public OrderResponseDto getOrderByNumber(String orderNumber, User currentUser) {
-        Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", orderNumber));
+        Order order = findOrderByNumberOrId(orderNumber);
 
         boolean isStaffOrAdmin = currentUser.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") ||
@@ -353,6 +372,44 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    public OrderResponseDto.DeliveryTrackingDto getOrderTracking(String orderIdentifier, User currentUser) {
+        Order order = findOrderByNumberOrId(orderIdentifier);
+
+        boolean isStaffOrAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") ||
+                               a.getAuthority().equals("ROLE_MANAGER") ||
+                               a.getAuthority().equals("ROLE_STAFF") ||
+                               a.getAuthority().equals("ROLE_KITCHEN"));
+
+        if (!isStaffOrAdmin && !order.getUser().getId().equals(currentUser.getId())) {
+            throw new UnauthorizedException("Access denied: You do not own this order.");
+        }
+
+        DeliveryTracking tracking = null;
+        if (deliveryTrackingRepository != null && order.getId() != null) {
+            tracking = deliveryTrackingRepository.findByOrderId(order.getId()).orElse(null);
+        }
+
+        OrderStatus status = tracking != null ? tracking.getStatus() : order.getStatus();
+        Instant statusTime = tracking != null ? tracking.getStatusUpdatedAt()
+                : (order.getUpdatedAt() != null ? order.getUpdatedAt() : order.getCreatedAt());
+
+        return OrderResponseDto.DeliveryTrackingDto.builder()
+                .trackingId(tracking != null ? tracking.getId() : null)
+                .orderId(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .status(status.name())
+                .statusLabel(status.getDisplayLabel())
+                .progressPercent(getProgressPercent(status))
+                .driverName(tracking != null ? tracking.getDriverName() : null)
+                .driverPhone(tracking != null ? tracking.getDriverPhone() : null)
+                .vehicleNumber(tracking != null ? tracking.getVehicleNumber() : null)
+                .currentLocation(tracking != null ? tracking.getCurrentLocation() : null)
+                .statusUpdatedAt(statusTime)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public List<OrderResponseDto> getCustomerOrders(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::mapToDto)
@@ -360,29 +417,62 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    public List<OrderResponseDto> getCustomerActiveOrders(Long userId) {
+        List<OrderStatus> terminal = Arrays.asList(
+                OrderStatus.COMPLETED, OrderStatus.DELIVERED,
+                OrderStatus.CANCELLED, OrderStatus.REFUNDED
+        );
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(o -> !terminal.contains(o.getStatus()))
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<OrderResponseDto> getBranchLiveOrders(Long branchId) {
         List<OrderStatus> activeStatuses = Arrays.asList(
-                OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.PREPARING,
-                OrderStatus.READY_FOR_PICKUP, OrderStatus.OUT_FOR_DELIVERY
+                OrderStatus.PLACED, OrderStatus.ORDER_PLACED,
+                OrderStatus.ACCEPTED, OrderStatus.ORDER_CONFIRMED,
+                OrderStatus.PREPARING, OrderStatus.RESTAURANT_PREPARING,
+                OrderStatus.READY_FOR_PICKUP, OrderStatus.FOOD_READY,
+                OrderStatus.OUT_FOR_DELIVERY
         );
         return orderRepository.findByBranchIdAndStatusInOrderByCreatedAtAsc(branchId, activeStatuses).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
+    public Order findOrderByNumberOrId(String identifier) {
+        if (identifier == null || identifier.trim().isBlank()) {
+            throw new ResourceNotFoundException("Order", "id", identifier);
+        }
+        String trimmed = identifier.trim();
+        if (trimmed.matches("^\\d+$")) {
+            Long orderId = Long.parseLong(trimmed);
+            return orderRepository.findById(orderId)
+                    .orElseGet(() -> orderRepository.findByOrderNumber(trimmed)
+                            .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId)));
+        }
+        return orderRepository.findByOrderNumber(trimmed)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderNumber", trimmed));
+    }
+
     private void validateStatusTransition(OrderStatus from, OrderStatus to) {
-        if (from == to) return;
-        if (from == OrderStatus.COMPLETED || from == OrderStatus.CANCELLED || from == OrderStatus.REFUNDED) {
+        OrderStatus normFrom = OrderStatus.fromString(from.name());
+        OrderStatus normTo = OrderStatus.fromString(to.name());
+
+        if (normFrom == normTo) return;
+        if (normFrom == OrderStatus.COMPLETED || normFrom == OrderStatus.CANCELLED || normFrom == OrderStatus.REFUNDED) {
             throw new BadRequestException("TERMINAL_STATUS", "Order is in a terminal state (" + from + ") and cannot be modified.");
         }
 
-        boolean valid = switch (from) {
-            case PENDING_PAYMENT -> to == OrderStatus.PLACED || to == OrderStatus.PAYMENT_FAILED || to == OrderStatus.CANCELLED;
-            case PLACED -> to == OrderStatus.ACCEPTED || to == OrderStatus.CANCELLED;
-            case ACCEPTED -> to == OrderStatus.PREPARING || to == OrderStatus.CANCELLED;
-            case PREPARING -> to == OrderStatus.READY_FOR_PICKUP || to == OrderStatus.CANCELLED;
-            case READY_FOR_PICKUP -> to == OrderStatus.OUT_FOR_DELIVERY || to == OrderStatus.COMPLETED || to == OrderStatus.CANCELLED;
-            case OUT_FOR_DELIVERY -> to == OrderStatus.COMPLETED || to == OrderStatus.CANCELLED;
+        boolean valid = switch (normFrom) {
+            case PENDING_PAYMENT -> normTo == OrderStatus.PLACED || normTo == OrderStatus.PAYMENT_FAILED || normTo == OrderStatus.CANCELLED;
+            case PLACED -> normTo == OrderStatus.ACCEPTED || normTo == OrderStatus.CANCELLED;
+            case ACCEPTED -> normTo == OrderStatus.PREPARING || normTo == OrderStatus.CANCELLED;
+            case PREPARING -> normTo == OrderStatus.READY_FOR_PICKUP || normTo == OrderStatus.CANCELLED;
+            case READY_FOR_PICKUP -> normTo == OrderStatus.OUT_FOR_DELIVERY || normTo == OrderStatus.COMPLETED || normTo == OrderStatus.CANCELLED;
+            case OUT_FOR_DELIVERY -> normTo == OrderStatus.COMPLETED || normTo == OrderStatus.CANCELLED;
             default -> false;
         };
 
@@ -390,6 +480,21 @@ public class OrderService {
             throw new BadRequestException("INVALID_TRANSITION",
                     String.format("Invalid order state transition from %s to %s", from, to));
         }
+    }
+
+    public static int getProgressPercent(OrderStatus status) {
+        if (status == null) return 0;
+        OrderStatus norm = OrderStatus.fromString(status.name());
+        return switch (norm) {
+            case PLACED -> 15;
+            case ACCEPTED -> 35;
+            case PREPARING -> 55;
+            case READY_FOR_PICKUP -> 75;
+            case OUT_FOR_DELIVERY -> 90;
+            case COMPLETED -> 100;
+            case CANCELLED, REFUNDED, PAYMENT_FAILED -> 0;
+            default -> 10;
+        };
     }
 
     private OrderResponseDto mapToDto(Order order) {
@@ -422,8 +527,40 @@ public class OrderService {
         String paymentMethod = payment != null ? payment.getPaymentMethod() : order.getPaymentMethod();
         String paymentDetails = payment != null ? payment.getPaymentDetails() : null;
         String paymentStatus = payment != null ? payment.getStatus().name() :
-                (order.getStatus() == OrderStatus.PLACED ? "PAID" : "PENDING");
+                (order.getStatus() == OrderStatus.PLACED || order.getStatus() == OrderStatus.ORDER_PLACED ? "PAID" : "PENDING");
         String gatewayTxId = payment != null ? payment.getGatewayTransactionId() : null;
+
+        // Map delivery tracking information
+        OrderResponseDto.DeliveryTrackingDto trackingDto = null;
+        if (deliveryTrackingRepository != null && order.getId() != null) {
+            DeliveryTracking tracking = deliveryTrackingRepository.findByOrderId(order.getId()).orElse(null);
+            if (tracking != null) {
+                trackingDto = OrderResponseDto.DeliveryTrackingDto.builder()
+                        .trackingId(tracking.getId())
+                        .orderId(order.getId())
+                        .orderNumber(order.getOrderNumber())
+                        .status(tracking.getStatus().name())
+                        .statusLabel(tracking.getStatus().getDisplayLabel())
+                        .progressPercent(getProgressPercent(tracking.getStatus()))
+                        .driverName(tracking.getDriverName())
+                        .driverPhone(tracking.getDriverPhone())
+                        .vehicleNumber(tracking.getVehicleNumber())
+                        .currentLocation(tracking.getCurrentLocation())
+                        .statusUpdatedAt(tracking.getStatusUpdatedAt())
+                        .build();
+            }
+        }
+
+        if (trackingDto == null) {
+            trackingDto = OrderResponseDto.DeliveryTrackingDto.builder()
+                    .orderId(order.getId())
+                    .orderNumber(order.getOrderNumber())
+                    .status(order.getStatus().name())
+                    .statusLabel(order.getStatus().getDisplayLabel())
+                    .progressPercent(getProgressPercent(order.getStatus()))
+                    .statusUpdatedAt(order.getUpdatedAt() != null ? order.getUpdatedAt() : order.getCreatedAt())
+                    .build();
+        }
 
         return OrderResponseDto.builder()
                 .id(order.getId())
@@ -450,6 +587,7 @@ public class OrderService {
                 .zomatoSyncStatus(order.getZomatoSyncStatus())
                 .zomatoSyncSuccess(order.getZomatoOrderId() != null)
                 .items(items)
+                .tracking(trackingDto)
                 .createdAt(order.getCreatedAt())
                 .build();
     }

@@ -99,6 +99,10 @@ public class Order {
     @JsonIgnore
     private List<Payment> payments = new ArrayList<>();
 
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private DeliveryTracking deliveryTracking;
+
     @Version
     @Column(nullable = false)
     @Builder.Default

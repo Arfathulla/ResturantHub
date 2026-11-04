@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,8 +20,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.time.Instant;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -51,8 +56,23 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authenticationProvider(authenticationProvider())
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/**", "/h2-console/**")
@@ -99,6 +119,7 @@ public class SecurityConfig {
                         })
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public Static Resources & Documentation
                         .requestMatchers(
                                 "/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**", "/favicon.ico",
@@ -108,29 +129,32 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/login", "/register", "/forgot-password", "/reset-password",
                                 "/branches", "/branches/*", "/menu", "/menu/*", "/about", "/contact",
+                                "/orders/tracking", "/tracking", "/delivery-tracker",
                                 "/actuator/health", "/actuator/info"
                         ).permitAll()
                         // Public REST Endpoints
                         .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/api/v1/public/**",
-                                "/api/v1/branches", "/api/v1/branches/*",
-                                "/api/v1/branches/*/menu",
-                                "/api/v1/menu/search",
-                                "/api/v1/menu/items/*",
-                                "/api/v1/webhooks/**"
+                                "/api/v1/auth/**", "/api/auth/**",
+                                "/api/v1/public/**", "/api/public/**",
+                                "/api/v1/branches", "/api/v1/branches/**",
+                                "/api/branches", "/api/branches/**",
+                                "/api/v1/menu/**", "/api/menu/**",
+                                "/api/v1/webhooks/**", "/api/webhooks/**"
                         ).permitAll()
                         // Role-based Access Control
-                        .requestMatchers("/admin/**", "/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/manager/**", "/api/v1/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
-                        .requestMatchers("/staff/**", "/api/v1/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
-                        .requestMatchers("/kitchen/**", "/api/v1/kitchen/**").hasAnyAuthority("ROLE_KITCHEN", "ROLE_MANAGER", "ROLE_ADMIN")
+                        .requestMatchers("/admin/**", "/api/v1/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/manager/**", "/api/v1/manager/**", "/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                        .requestMatchers("/staff/**", "/api/v1/staff/**", "/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
+                        .requestMatchers("/kitchen/**", "/api/v1/kitchen/**", "/api/kitchen/**").hasAnyAuthority("ROLE_KITCHEN", "ROLE_MANAGER", "ROLE_ADMIN")
                         // Customer / Authenticated Operations
                         .requestMatchers(
                                 "/profile/**", "/reservations/**", "/cart/**", "/checkout/**",
-                                "/orders/**", "/payments/**", "/api/v1/me/**", "/api/v1/reservations/**",
-                                "/api/v1/cart/**", "/api/v1/orders/**", "/api/v1/payments/**",
-                                "/api/v1/tracking/**"
+                                "/orders/**", "/payments/**", "/api/v1/me/**", "/api/me/**",
+                                "/api/v1/reservations/**", "/api/reservations/**",
+                                "/api/v1/cart/**", "/api/cart/**",
+                                "/api/v1/orders/**", "/api/orders/**",
+                                "/api/v1/payments/**", "/api/payments/**",
+                                "/api/v1/tracking/**", "/api/tracking/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

@@ -39,6 +39,7 @@ public class OrderResponseDto {
     private String zomatoSyncStatus;
     private boolean zomatoSyncSuccess;
     private List<OrderItemDto> items;
+    private DeliveryTrackingDto tracking;
     private Instant createdAt;
 
     @Data
@@ -52,5 +53,23 @@ public class OrderResponseDto {
         private BigDecimal totalPrice;
         private List<String> addonNames;
         private String specialInstructions;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DeliveryTrackingDto {
+        private Long trackingId;
+        private Long orderId;
+        private String orderNumber;
+        private String status;
+        private String statusLabel;
+        private int progressPercent;
+        private String driverName;
+        private String driverPhone;
+        private String vehicleNumber;
+        private String currentLocation;
+        private Instant statusUpdatedAt;
     }
 }

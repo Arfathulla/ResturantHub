@@ -64,6 +64,9 @@ class OrderServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
+    private DeliveryTrackingRepository deliveryTrackingRepository;
+
+    @Mock
     private com.restauranthub.integration.zomato.ZomatoIntegrationService zomatoIntegrationService;
 
     @InjectMocks
