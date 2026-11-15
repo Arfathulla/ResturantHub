@@ -79,4 +79,16 @@ public class OrderRestController {
         OrderResponseDto updated = orderService.updateOrderStatus(orderIdentifier, request, user);
         return ResponseEntity.ok(ApiResponse.success("Order status updated", updated));
     }
+
+    @PostMapping({"/{orderIdentifier}/advance", "/{orderIdentifier}/status/advance"})
+    @Operation(summary = "Advance order to next lifecycle status (Placed -> Confirmed -> Preparing -> Ready -> Out for Delivery -> Delivered)")
+    public ResponseEntity<ApiResponse<OrderResponseDto>> advanceStatus(@PathVariable String orderIdentifier) {
+        User user = null;
+        try {
+            user = authService.getCurrentAuthenticatedUser();
+        } catch (Exception ignored) {
+        }
+        OrderResponseDto updated = orderService.advanceOrderStatus(orderIdentifier, user);
+        return ResponseEntity.ok(ApiResponse.success("Order advanced to " + updated.getStatus(), updated));
+    }
 }

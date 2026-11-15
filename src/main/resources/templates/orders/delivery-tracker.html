@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout :: page('Delivery Tracker', ~{::#content})}">
+<head><title>Delivery Tracker</title></head>
+<body>
+<div id="content">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="fa-solid fa-motorcycle text-warning me-2"></i> Live Delivery Tracker</h2>
+                <p class="text-muted mb-0">Track real-time progress for your confirmed Bhojana Bangalore culinary orders</p>
+            </div>
+            <a href="/menu" class="btn btn-warning fw-bold"><i class="fa-solid fa-plus me-1"></i> New Order</a>
+        </div>
+
+        <!-- EMPTY STATE: Displayed when customer has not placed an order or has no active deliveries -->
+        <div th:if="${!hasActiveOrders}" class="card shadow-sm p-5 text-center border-0 bg-white my-4">
+            <div class="mb-3">
+                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <i class="fa-solid fa-box-open text-muted fa-3x"></i>
+                </div>
+            </div>
+            <h4 class="fw-bold text-dark mb-2">No active deliveries. Place an order to track your delivery.</h4>
+            <p class="text-muted mb-4" style="max-width: 520px; margin: 0 auto;">
+                The delivery tracker activates only after a food order has been successfully placed and persisted in our system.
+            </p>
+            <div>
+                <a href="/menu" class="btn btn-warning fw-bold px-4 py-2 me-2">
+                    <i class="fa-solid fa-utensils me-1"></i> Browse Bangalore Menu
+                </a>
+                <a href="/orders/my-orders" class="btn btn-outline-dark px-4 py-2">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Order History
+                </a>
+            </div>
+        </div>
+
+        <!-- ACTIVE DELIVERIES: Displayed ONLY when real active orders exist in MySQL -->
+        <div th:if="${hasActiveOrders}">
+            <div class="row g-4">
+                <div class="col-12" th:each="order : ${activeOrders}">
+                    <div class="card shadow-sm border-0 overflow-hidden mb-3">
+                        <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <span class="badge bg-warning text-dark me-2" th:text="${order.orderType}">DELIVERY</span>
+                                <strong class="fs-6 text-warning">Order #<span th:text="${order.orderNumber}">ORD-123</span></strong>
+                                <span class="text-muted ms-2 small">| Placed at: <span th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy, hh:mm a')}">Date</span></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge px-3 py-2"
+                                      th:classappend="${order.status == 'COMPLETED'} ? 'bg-success' : (${order.status == 'CANCELLED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                      th:text="${order.status}">PLACED</span>
+                                <form th:if="${order.status != 'COMPLETED' and order.status != 'CANCELLED'}"
+                                      th:action="@{'/orders/' + ${order.orderNumber} + '/advance'}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-warning text-dark fw-bold">
+                                        <i class="fa-solid fa-forward me-1"></i> Advance Status
+                                    </button>
+                                </form>
+                                <a th:href="@{'/orders/' + ${order.orderNumber}}" class="btn btn-sm btn-light fw-semibold">
+                                    <i class="fa-solid fa-up-right-from-square me-1"></i> Track Live
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <!-- Stepper Progress for this specific active order -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small fw-bold text-muted">Status Progress:</span>
+                                    <span class="small fw-bold text-warning" th:text="${order.tracking != null ? order.tracking.statusLabel : order.status}">Order Placed</span>
+                                </div>
+                                <div class="progress" style="height: 8px; border-radius: 10px;">
+                                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                                         role="progressbar"
+                                         th:style="'width: ' + ${order.tracking != null ? order.tracking.progressPercent : 15} + '%;'"></div>
+                                </div>
+                            </div>
+
+                            <div class="row align-items-center">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <div class="small text-muted mb-1"><i class="fa-solid fa-store text-danger me-1"></i> Branch: <strong class="text-dark" th:text="${order.branchName}">Branch</strong></div>
+                                    <div th:if="${order.deliveryAddress}" class="small text-muted"><i class="fa-solid fa-location-dot text-danger me-1"></i> Destination: <span th:text="${order.deliveryAddress}">Address</span></div>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="fs-5 fw-bold text-danger">₹<span th:text="${order.finalTotal}">0.00</span></div>
+                                    <div class="small text-muted" th:text="${order.items.size() + ' item(s) ordered'}">1 item(s)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

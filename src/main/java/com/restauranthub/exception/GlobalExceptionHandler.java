@@ -178,6 +178,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
+    @ExceptionHandler(org.springframework.web.context.request.async.AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsable(org.springframework.web.context.request.async.AsyncRequestNotUsableException ex, HttpServletRequest request) {
+        // SSE client disconnected or aborted connection (e.g. browser navigation/closed tab)
+        log.debug("Async/SSE client connection disconnected for URI {}: {}", request.getRequestURI(), ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public Object handleGenericException(Exception ex, HttpServletRequest request) {
         String correlationId = UUID.randomUUID().toString();

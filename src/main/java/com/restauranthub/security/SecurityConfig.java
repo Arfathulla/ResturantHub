@@ -75,7 +75,11 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authenticationProvider(authenticationProvider())
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/**", "/h2-console/**")
+                        .ignoringRequestMatchers(
+                                "/api/**", "/h2-console/**",
+                                "/sql-queries/**", "/admin/sql-console/**", "/sql/**",
+                                "/orders/*/advance", "/orders/*/cancel"
+                        )
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -130,6 +134,11 @@ public class SecurityConfig {
                                 "/", "/login", "/register", "/forgot-password", "/reset-password",
                                 "/branches", "/branches/*", "/menu", "/menu/*", "/about", "/contact",
                                 "/orders/tracking", "/tracking", "/delivery-tracker",
+                                "/orders/*/advance", "/orders/*/cancel",
+                                "/sql-queries", "/sql-queries/**", "/sql", "/sql/**", "/admin/sql-console", "/admin/sql-console/**",
+                                "/api/v1/admin/sql/**", "/api/admin/sql/**",
+                                "/api/v1/orders/*/advance", "/api/v1/orders/*/status/advance",
+                                "/api/orders/*/advance", "/api/orders/*/status/advance",
                                 "/actuator/health", "/actuator/info"
                         ).permitAll()
                         // Public REST Endpoints
@@ -139,10 +148,11 @@ public class SecurityConfig {
                                 "/api/v1/branches", "/api/v1/branches/**",
                                 "/api/branches", "/api/branches/**",
                                 "/api/v1/menu/**", "/api/menu/**",
+                                "/api/v1/tracking/**", "/api/tracking/**",
                                 "/api/v1/webhooks/**", "/api/webhooks/**"
                         ).permitAll()
                         // Role-based Access Control
-                        .requestMatchers("/admin/**", "/api/v1/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/admin/**", "/sql-console/**", "/api/v1/admin/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/manager/**", "/api/v1/manager/**", "/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
                         .requestMatchers("/staff/**", "/api/v1/staff/**", "/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
                         .requestMatchers("/kitchen/**", "/api/v1/kitchen/**", "/api/kitchen/**").hasAnyAuthority("ROLE_KITCHEN", "ROLE_MANAGER", "ROLE_ADMIN")

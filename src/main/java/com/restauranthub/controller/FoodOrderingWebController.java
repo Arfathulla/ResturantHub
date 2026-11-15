@@ -4,7 +4,9 @@ import com.restauranthub.dto.CartItemRequestDto;
 import com.restauranthub.dto.CartResponseDto;
 import com.restauranthub.dto.OrderResponseDto;
 import com.restauranthub.dto.PlaceOrderRequestDto;
+import com.restauranthub.dto.UpdateOrderStatusRequestDto;
 import com.restauranthub.entity.User;
+import com.restauranthub.entity.enums.OrderStatus;
 import com.restauranthub.exception.ApiException;
 import com.restauranthub.service.*;
 import jakarta.validation.Valid;
@@ -146,6 +148,37 @@ public class FoodOrderingWebController {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
             return "redirect:/orders/tracking";
         }
+    }
+
+    @PostMapping("/orders/{orderNumber}/advance")
+    public String advanceOrderStatus(@PathVariable String orderNumber,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            User user = null;
+            try {
+                user = authService.getCurrentAuthenticatedUser();
+            } catch (Exception ignored) {
+            }
+            OrderResponseDto updated = orderService.advanceOrderStatus(orderNumber, user);
+            redirectAttributes.addFlashAttribute("successMessage", "Order advanced to " + updated.getStatus());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/orders/" + orderNumber;
+    }
+
+    @PostMapping("/orders/{orderNumber}/cancel")
+    public String cancelOrder(@PathVariable String orderNumber,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            User user = authService.getCurrentAuthenticatedUser();
+            UpdateOrderStatusRequestDto dto = new UpdateOrderStatusRequestDto(OrderStatus.CANCELLED, "Customer requested cancellation");
+            orderService.updateOrderStatus(orderNumber, dto, user);
+            redirectAttributes.addFlashAttribute("successMessage", "Order " + orderNumber + " cancelled successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/orders/" + orderNumber;
     }
 
     @GetMapping("/orders/my-orders")

@@ -354,6 +354,70 @@ public class OrderService {
         return mapToDto(updated);
     }
 
+    @Transactional
+    public OrderResponseDto advanceOrderStatus(String orderIdentifier, User currentUser) {
+        Order order = findOrderByNumberOrId(orderIdentifier);
+        OrderStatus currentStatus = order.getStatus();
+        OrderStatus normFrom = OrderStatus.fromString(currentStatus.name());
+
+        OrderStatus nextStatus = switch (normFrom) {
+            case PENDING_PAYMENT -> OrderStatus.PLACED;
+            case PLACED -> OrderStatus.ACCEPTED;
+            case ACCEPTED -> OrderStatus.PREPARING;
+            case PREPARING -> OrderStatus.READY_FOR_PICKUP;
+            case READY_FOR_PICKUP -> (order.getOrderType() != null && order.getOrderType() != OrderType.DELIVERY)
+                    ? OrderStatus.COMPLETED : OrderStatus.OUT_FOR_DELIVERY;
+            case OUT_FOR_DELIVERY -> OrderStatus.COMPLETED;
+            case COMPLETED, DELIVERED -> OrderStatus.COMPLETED;
+            case CANCELLED -> OrderStatus.CANCELLED;
+            default -> OrderStatus.COMPLETED;
+        };
+
+        if (normFrom == nextStatus) {
+            return mapToDto(order); // already at terminal state
+        }
+
+        order.setStatus(nextStatus);
+        Order updated = orderRepository.save(order);
+
+        // Update status history
+        Long changedBy = (currentUser != null && currentUser.getId() != null) ? currentUser.getId() : order.getUser().getId();
+        OrderStatusHistory history = OrderStatusHistory.builder()
+                .order(updated)
+                .fromStatus(currentStatus)
+                .toStatus(nextStatus)
+                .changedByUserId(changedBy)
+                .comment("Delivery progress advanced to " + nextStatus.getDisplayLabel())
+                .build();
+        statusHistoryRepository.save(history);
+
+        // Update DeliveryTracking record in MySQL
+        if (deliveryTrackingRepository != null) {
+            DeliveryTracking tracking = deliveryTrackingRepository.findByOrderId(updated.getId())
+                    .orElseGet(() -> DeliveryTracking.builder().order(updated).build());
+            tracking.setStatus(nextStatus);
+            tracking.setStatusUpdatedAt(Instant.now());
+
+            if (nextStatus == OrderStatus.OUT_FOR_DELIVERY) {
+                if (tracking.getDriverName() == null || tracking.getDriverName().isBlank()) {
+                    tracking.setDriverName("Kiran Gowda");
+                    tracking.setDriverPhone("+91 99002 65432");
+                    tracking.setVehicleNumber("KA-01-EQ-4921");
+                    tracking.setCurrentLocation("Intermediate Ring Road, Domlur");
+                    tracking.setEstimatedDeliveryMinutes(12);
+                }
+            } else if (nextStatus == OrderStatus.COMPLETED || nextStatus == OrderStatus.DELIVERED) {
+                tracking.setCurrentLocation("Delivered at Customer Address");
+                tracking.setEstimatedDeliveryMinutes(0);
+            }
+
+            deliveryTrackingRepository.save(tracking);
+        }
+
+        log.info("Order {} status advanced from {} to {} in MySQL database", order.getOrderNumber(), currentStatus, nextStatus);
+        return mapToDto(updated);
+    }
+
     @Transactional(readOnly = true)
     public OrderResponseDto getOrderByNumber(String orderNumber, User currentUser) {
         Order order = findOrderByNumberOrId(orderNumber);

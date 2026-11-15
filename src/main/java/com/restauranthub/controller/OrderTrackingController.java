@@ -98,13 +98,17 @@ public class OrderTrackingController {
         emitters.put(resolvedOrderNumber, emitter);
 
         // Schedule periodic DB polling with safe cancellation
-        ScheduledFuture<?> pollFuture = scheduler.scheduleAtFixedRate(() -> {
+        ScheduledFuture<?>[] pollFutureHolder = new ScheduledFuture<?>[1];
+        pollFutureHolder[0] = scheduler.scheduleAtFixedRate(() -> {
             try {
                 Order currentOrder = orderRepository.findByOrderNumber(resolvedOrderNumber).orElse(null);
                 if (currentOrder == null) {
-                    emitter.send(SseEmitter.event().name("error")
-                            .data("{\"message\":\"Order not found\"}"));
-                    emitter.complete();
+                    try {
+                        emitter.send(SseEmitter.event().name("error")
+                                .data("{\"message\":\"Order not found\"}"));
+                        emitter.complete();
+                    } catch (Exception ignored) {}
+                    if (pollFutureHolder[0] != null) pollFutureHolder[0].cancel(true);
                     return;
                 }
 
@@ -114,15 +118,26 @@ public class OrderTrackingController {
                 OrderStatus st = currentOrder.getStatus();
                 if (st == OrderStatus.COMPLETED || st == OrderStatus.DELIVERED ||
                     st == OrderStatus.CANCELLED || st == OrderStatus.REFUNDED) {
-                    emitter.complete();
+                    if (pollFutureHolder[0] != null) pollFutureHolder[0].cancel(true);
+                    try {
+                        emitter.complete();
+                    } catch (Exception ignored) {}
                 }
-            } catch (IOException e) {
-                emitter.completeWithError(e);
+            } catch (IOException | IllegalStateException e) {
+                // Client disconnected (e.g. browser tab closed or refreshed, ClientAbortException)
+                log.debug("SSE client connection closed for order {}: {}", resolvedOrderNumber, e.getMessage());
+                if (pollFutureHolder[0] != null) pollFutureHolder[0].cancel(true);
+                emitters.remove(resolvedOrderNumber);
             } catch (Exception e) {
-                log.error("Error polling order status for {}: {}", resolvedOrderNumber, e.getMessage());
-                emitter.completeWithError(e);
+                log.warn("Error polling order status for {}: {}", resolvedOrderNumber, e.getMessage());
+                if (pollFutureHolder[0] != null) pollFutureHolder[0].cancel(true);
+                try {
+                    emitter.completeWithError(e);
+                } catch (Exception ignored) {}
             }
         }, 0, 5, TimeUnit.SECONDS);
+
+        ScheduledFuture<?> pollFuture = pollFutureHolder[0];
 
         emitter.onCompletion(() -> {
             emitters.remove(resolvedOrderNumber);
