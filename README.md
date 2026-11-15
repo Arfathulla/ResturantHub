@@ -87,6 +87,3 @@ mvn clean spring-boot:run
 * Kitchen
 * Customer
 
-## 📄 License
-
-This project is licensed under the MIT License.
